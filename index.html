@@ -342,52 +342,8 @@ body{background:linear-gradient(135deg,#f8fdff,#eefcff 45%,#fff9ef)!important}
 @media(max-width:650px){.profile-head{justify-content:center}.profile-photo-box{flex-basis:100%;width:min(300px,100%)}.profile-photo,.profile-photo-placeholder{width:min(300px,100%);height:auto;aspect-ratio:1/1;margin:auto}.profile-details{width:100%;text-align:center}.profile-photo-actions{grid-template-columns:1fr 1fr}}
 </style>
 
-
-<style id="worker-services-style">
-.services-panel{margin:22px 0;padding:20px;border-radius:22px;background:linear-gradient(135deg,#f8fbff,#eef5fb);border:1px solid #dce8f2}
-.services-panel h2{margin:0 0 6px;color:#0b3d62}
-.services-panel .sub{margin:0 0 16px;color:#667085;font-size:14px}
-.services-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.service-card{border:1px solid #dce8f2;background:#fff;border-radius:17px;padding:17px 12px;text-align:center;cursor:pointer;transition:.2s;box-shadow:0 5px 18px #0b3d6210}
-.service-card.post-login-library{display:none !important}.service-card.post-login-library.is-authenticated{display:block !important}.service-card:hover{transform:translateY(-2px);box-shadow:0 9px 22px #0b3d6218}
-.service-icon{font-size:30px;display:block;margin-bottom:8px}.service-card b{display:block;color:#17324d}.service-card small{color:#667085}
-.service-modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:15px;z-index:9999}
-.service-modal.open{display:flex}.service-box{background:#fff;border-radius:22px;max-width:850px;width:100%;max-height:88vh;overflow:auto;padding:22px;position:relative}
-.service-close{position:absolute;left:14px;top:12px;border:0;background:#eef3f8;border-radius:50%;width:38px;height:38px;font-size:20px;cursor:pointer}
-.service-box h3{color:#0b3d62;margin-top:0}.dhikr{padding:14px;border:1px solid #e5eaf1;border-radius:14px;margin:9px 0;line-height:1.9;background:#fbfdff}
-.quran-note{background:#f5f9fc;padding:14px;border-radius:14px;margin:12px 0}.library-item{padding:12px;border-bottom:1px solid #e7edf3}
-@media(max-width:800px){.services-grid{grid-template-columns:repeat(2,1fr)}}
-</style>
-
-<style id="services-toggle-final">
-.services-toggle{border:0;background:none;color:#0b3d62;font-size:22px;font-weight:800;cursor:pointer;padding:0;text-align:right}
-.services-toggle:hover{opacity:.85}
-</style>
 </head>
 <body>
-<section class="services-panel" id="workerServices">
-  <button class="services-toggle" onclick="toggleWorkerServices()">🌟 خدمات العاملين</button>
-  <p class="sub">خدمات مفيدة للعامل في مكان واحد</p>
-  <div class="services-grid" id="workerServicesGrid" style="display:none">
-    <div class="service-card" onclick="openService('quran')"><span class="service-icon">📖</span><b>القرآن الكريم</b><small>قراءة السور</small></div>
-    <div class="service-card" onclick="openService('adhkar')"><span class="service-icon">🤲</span><b>الأذكار</b><small>أذكار الصباح والمساء</small></div>
-    <div class="service-card" onclick="openService('prayer')"><span class="service-icon">🕌</span><b>مواقيت الصلاة</b><small>حسب المدينة</small></div>
-    <div class="service-card post-login-library" onclick="openService('library')" style="display:none"><span class="service-icon">📚</span><b>مكتبة العامل</b><small>تعليمات ونماذج وملفات</small></div>
-  
-<div class="service-card" onclick="openService('tasbeeh')"><span class="service-icon">📿</span><b>المسبحة الإلكترونية</b><small>عداد التسبيح</small></div>
-<div class="service-card" onclick="openService('calendar')"><span class="service-icon">📅</span><b>التقويم</b><small>التاريخ الهجري والميلادي</small></div>
-<div class="service-card" onclick="openService('daily')"><span class="service-icon">💡</span><b>رسالة اليوم</b><small>حكمة وفائدة</small></div>
-<div class="service-card" onclick="openService('contact')"><span class="service-icon">☎️</span><b>تواصل معنا</b><small>للاستفسارات</small></div>
-</div>
-</section>
-
-<div class="service-modal" id="serviceModal" onclick="if(event.target===this)closeService()">
-  <div class="service-box">
-    <button class="service-close" onclick="closeService()">×</button>
-    <div id="serviceContent"></div>
-  </div>
-</div>
-
 <header class="brand-header"><div class="brand-wrap">
 <div class="text-brand"><div class="company">شركة مصر للطيران للخدمات الجوية</div><div class="workers">العمالة المعاونة</div><div class="rule"></div></div>
 </div></header>
@@ -796,7 +752,7 @@ async function loadMyAttendanceTable(){
  box.innerHTML=`<div class="summary-cards"><div class="stat"><span>حضور</span><b>${present}</b></div><div class="stat"><span>غياب</span><b>${absent}</b></div><div class="stat"><span>إجازة</span><b>${leave}</b></div><div class="stat"><span>مأمورية</span><b>${mission}</b></div></div><h4>📋 سجلي — ${monthName(month)} ${year}</h4><div class="scroll"><table class="month-table horizontal-days"><thead><tr><th>البيان</th>${daysHead}</tr></thead><tbody><tr><th>الحالة</th>${statusRow}</tr><tr><th>الملاحظات</th>${notesRow}</tr></tbody></table></div>`;
 }
 function fmtMoney(v){return Number(v||0).toFixed(2)+" جنيه";}
-async function loadMyPayslip(){const month=Number(document.getElementById("myMonth").value),year=Number(document.getElementById("myYear").value),box=document.getElementById("myPayslip");if(!window.currentWorkerId)return;const {data:w}=await db.from("workers").select("worker_code,full_name,department,job_title,daily_rate").eq("id",window.currentWorkerId).maybeSingle(),r=await getMonthAttendance(window.currentWorkerId,year,month);if(r.error){box.innerHTML=`<p class="error">${esc(r.error.message)}</p>`;return}const c={حضور:0,غياب:0,إجازة:0,مأمورية:0};(r.data||[]).forEach(x=>c[x.attendance_status]=(c[x.attendance_status]||0)+1);const total=(c.حضور+c.مأمورية)*Number(w?.daily_rate||0),map=Object.fromEntries((r.data||[]).map(x=>[x.attendance_date,x]));let dayHeaders='',dayDates='',dayStatus='';for(let d=1;d<=daysInMonth(year,month);d++){const date=`${year}-${String(month).padStart(2,"0")}-${String(d).padStart(2,"0")}`,a=map[date],st=a?.attendance_status||"غياب",cls=st==="حضور"?"status-present":st==="غياب"?"status-absent":st==="إجازة"?"status-leave":st==="مأمورية"?"status-mission":"";dayHeaders+=`<th>${d}</th>`;dayDates+=`<td>${String(d).padStart(2,"0")}/${String(month).padStart(2,"0")}</td>`;dayStatus+=`<td class="${cls}">${esc(st)}</td>`}box.innerHTML=`<div class="salary-slip" id="salarySlip"><div class="salary-head"><div><div class="print-only">شركة مصر للطيران للخدمات الجوية — العمالة المعاونة (المتابعة المركزية)</div><h2>💳 مفردات المرتب الشهرية</h2><div style="opacity:.85;margin-top:5px">كشف استحقاقات شهري</div></div><div>${monthName(month)} ${year}</div></div><div class="salary-info"><div class="salary-chip"><span>اسم العامل</span><b>${esc(w?.full_name)}</b></div><div class="salary-chip"><span>الكود</span><b>${esc(w?.worker_code)}</b></div><div class="salary-chip"><span>الإدارة</span><b>${esc(w?.department||"—")}</b></div><div class="salary-chip"><span>الوظيفة</span><b>${esc(w?.job_title||"—")}</b></div><div class="salary-chip"><span>قيمة اليومية</span><b>${fmtMoney(w?.daily_rate)} جنيه</b></div></div><div class="salary-summary"><div class="salary-stat"><span>حضور</span><b>${c.حضور}</b></div><div class="salary-stat"><span>مأمورية</span><b>${c.مأمورية}</b></div><div class="salary-stat"><span>غياب</span><b>${c.غياب}</b></div><div class="salary-stat"><span>إجازة</span><b>${c.إجازة}</b></div><div class="salary-stat"><span>الأيام المستحقة</span><b>${c.حضور+c.مأمورية}</b></div></div><div class="salary-total"><span>إجمالي المستحق</span><span>${fmtMoney(total)} <small>جنيه</small></span></div><div class="salary-days-title"><h3 style="margin:0">📅 تفاصيل الشهر</h3><span class="muted">اسحب يمينًا ويسارًا لرؤية الأيام</span></div><div class="salary-days-wrap"><table class="salary-days"><thead><tr><th>البيان</th>${dayHeaders}</tr></thead><tbody><tr><th>التاريخ</th>${dayDates}</tr><tr><th>الحالة</th>${dayStatus}</tr></tbody></table></div></div><div class="no-print"><button onclick="printPayslip()">🖨️ طباعة مفردات المرتب</button></div>`}function printPayslip(){window.print();}
+async function loadMyPayslip(){const month=Number(document.getElementById("myMonth").value),year=Number(document.getElementById("myYear").value),box=document.getElementById("myPayslip");if(!window.currentWorkerId)return;const {data:w}=await db.from("workers").select("worker_code,full_name,department,job_title,daily_rate").eq("id",window.currentWorkerId).maybeSingle(),r=await getMonthAttendance(window.currentWorkerId,year,month);if(r.error){box.innerHTML=`<p class="error">${esc(r.error.message)}</p>`;return}const c={حضور:0,غياب:0,إجازة:0,مأمورية:0};(r.data||[]).forEach(x=>c[x.attendance_status]=(c[x.attendance_status]||0)+1);const total=(c.حضور+c.مأمورية)*Number(w?.daily_rate||0),map=Object.fromEntries((r.data||[]).map(x=>[x.attendance_date,x]));let dayHeaders='',dayDates='',dayStatus='';for(let d=1;d<=daysInMonth(year,month);d++){const date=`${year}-${String(month).padStart(2,"0")}-${String(d).padStart(2,"0")}`,a=map[date],st=a?.attendance_status||"غياب",cls=st==="حضور"?"status-present":st==="غياب"?"status-absent":st==="إجازة"?"status-leave":st==="مأمورية"?"status-mission":"";dayHeaders+=`<th>${d}</th>`;dayDates+=`<td>${String(d).padStart(2,"0")}/${String(month).padStart(2,"0")}</td>`;dayStatus+=`<td class="${cls}">${esc(st)}</td>`}box.innerHTML=`<div class="salary-slip" id="salarySlip"><div class="salary-head"><div><div class="print-only">شركة مصر للطيران للخدمات الجوية — العمالة المعاونة (المتابعة المركزية)</div><h2>💳 مفردات المرتب الشهرية</h2><div style="opacity:.85;margin-top:5px">كشف استحقاقات شهري</div></div><div>${monthName(month)} ${year}</div></div><div class="salary-info"><div class="salary-chip"><span>اسم العامل</span><b>${esc(w?.full_name)}</b></div><div class="salary-chip"><span>الكود</span><b>${esc(w?.worker_code)}</b></div><div class="salary-chip"><span>الإدارة</span><b>${esc(w?.department||"—")}</b></div><div class="salary-chip"><span>الوظيفة</span><b>${esc(w?.job_title||"—")}</b></div><div class="salary-chip"><span>قيمة اليومية</span><b>${fmtMoney(w?.daily_rate)} جنيه</b></div></div><div class="salary-summary"><div class="salary-stat"><span>حضور</span><b>${c.حضور}</b></div><div class="salary-stat"><span>مأمورية</span><b>${c.مأمورية}</b></div><div class="salary-stat"><span>غياب</span><b>${c.غياب}</b></div><div class="salary-stat"><span>إجازة</span><b>${c.إجازة}</b></div><div class="salary-stat"><span>الأيام المستحقة</span><b>${c.حضور+c.مأمورية}</b></div></div><div class="salary-total"><span>إجمالي المستحق</span><span>${fmtMoney(total)} <small>جنيه</small></span></div><div class="salary-days-title"><h3 style="margin:0">📅 تفاصيل الشهر بالعرض</h3><span class="muted">اسحب يمينًا ويسارًا لرؤية الأيام</span></div><div class="salary-days-wrap"><table class="salary-days"><thead><tr><th>البيان</th>${dayHeaders}</tr></thead><tbody><tr><th>التاريخ</th>${dayDates}</tr><tr><th>الحالة</th>${dayStatus}</tr></tbody></table></div></div><div class="no-print"><button onclick="printPayslip()">🖨️ طباعة مفردات المرتب</button></div>`}function printPayslip(){window.print();}
 async function uploadIdCardSide(type,inputId,msgId){
  const input=document.getElementById(inputId),msg=document.getElementById(msgId); msg.className="";msg.textContent="";
  const f=input?.files?.[0]; if(!f){msg.className="error";msg.textContent="اختر صورة أولًا.";return}
@@ -1247,119 +1203,258 @@ db.auth.onAuthStateChange((event,session)=>{
 </script>
 
 
-<script id="worker-services-script">
-const quranSurahs=[
-["الفاتحة","1"],["البقرة","2"],["آل عمران","3"],["النساء","4"],["المائدة","5"],["الأنعام","6"],
-["الأعراف","7"],["الأنفال","8"],["التوبة","9"],["يونس","10"],["هود","11"],["يوسف","12"],
-["الرعد","13"],["إبراهيم","14"],["الحجر","15"],["النحل","16"],["الإسراء","17"],["الكهف","18"],
-["مريم","19"],["طه","20"],["الأنبياء","21"],["الحج","22"],["المؤمنون","23"],["النور","24"],
-["الفرقان","25"],["الشعراء","26"],["النمل","27"],["القصص","28"],["العنكبوت","29"],["الروم","30"],
-["لقمان","31"],["السجدة","32"],["الأحزاب","33"],["سبأ","34"],["فاطر","35"],["يس","36"],
-["الصافات","37"],["ص","38"],["الزمر","39"],["غافر","40"],["فصلت","41"],["الشورى","42"],
-["الزخرف","43"],["الدخان","44"],["الجاثية","45"],["الأحقاف","46"],["محمد","47"],["الفتح","48"],
-["الحجرات","49"],["ق","50"],["الذاريات","51"],["الطور","52"],["النجم","53"],["القمر","54"],
-["الرحمن","55"],["الواقعة","56"],["الحديد","57"],["المجادلة","58"],["الحشر","59"],["الممتحنة","60"],
-["الصف","61"],["الجمعة","62"],["المنافقون","63"],["التغابن","64"],["الطلاق","65"],["التحريم","66"],
-["الملك","67"],["القلم","68"],["الحاقة","69"],["المعارج","70"],["نوح","71"],["الجن","72"],
-["المزمل","73"],["المدثر","74"],["القيامة","75"],["الإنسان","76"],["المرسلات","77"],["النبأ","78"],
-["النازعات","79"],["عبس","80"],["التكوير","81"],["الانفطار","82"],["المطففين","83"],["الانشقاق","84"],
-["البروج","85"],["الطارق","86"],["الأعلى","87"],["الغاشية","88"],["الفجر","89"],["البلد","90"],
-["الشمس","91"],["الليل","92"],["الضحى","93"],["الشرح","94"],["التين","95"],["العلق","96"],
-["القدر","97"],["البينة","98"],["الزلزلة","99"],["العاديات","100"],["القارعة","101"],["التكاثر","102"],
-["العصر","103"],["الهمزة","104"],["الفيل","105"],["قريش","106"],["الماعون","107"],["الكوثر","108"],
-["الكافرون","109"],["النصر","110"],["المسد","111"],["الإخلاص","112"],["الفلق","113"],["الناس","114"]
-];
-function openService(type){
- const c=document.getElementById("serviceContent");
- if(type==="quran"){
-   c.innerHTML=`<h3>📖 القرآن الكريم</h3><p class="quran-note">اختر السورة لفتح صفحة القراءة.</p>
-   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-   ${quranSurahs.map(s=>`<button class="ghost" style="padding:10px" onclick="window.open('https://quran.com/${s[1]}','_blank')">${s[0]}</button>`).join("")}
-   </div>`;
- }else if(type==="adhkar"){
-   c.innerHTML=`<h3>🤲 الأذكار</h3>
-   <div class="dhikr"><b>أذكار الصباح</b><br>أصبحنا وأصبح الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له.</div>
-   <div class="dhikr"><b>أذكار المساء</b><br>أمسينا وأمسى الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له.</div>
-   <div class="dhikr"><b>الاستغفار</b><br>أستغفر الله وأتوب إليه.</div>
-   <div class="dhikr"><b>الصلاة على النبي ﷺ</b><br>اللهم صل وسلم وبارك على نبينا محمد.</div>`;
- }else if(type==="prayer"){
-   c.innerHTML=`<h3>🕌 مواقيت الصلاة</h3>
-   <p class="quran-note">للحصول على المواقيت الدقيقة حسب موقعك، افتح خدمة مواقيت الصلاة.</p>
-   <button class="primary" onclick="window.open('https://www.islamicfinder.org/prayer-widget/','_blank')">فتح مواقيت الصلاة</button>`;
-  }else if(type==="tasbeeh"){
-   c.innerHTML=`<h3>📿 المسبحة الإلكترونية</h3>
-   <div style="text-align:center;padding:15px">
-     <div id="tasbeehCount" style="font-size:54px;font-weight:800;color:#0b3d62">0</div>
-     <button class="primary" onclick="document.getElementById('tasbeehCount').textContent=+document.getElementById('tasbeehCount').textContent+1">سبحان الله</button>
-     <button class="ghost" onclick="document.getElementById('tasbeehCount').textContent=0">تصفير</button>
-   </div>`;
- }else if(type==="calendar"){
-   const d=new Date();
-   const h=new Intl.DateTimeFormat('ar-EG-u-ca-islamic',{dateStyle:'full'}).format(d);
-   const g=new Intl.DateTimeFormat('ar-EG',{dateStyle:'full'}).format(d);
-   c.innerHTML=`<h3>📅 التقويم</h3><div class="dhikr"><b>الميلادي</b><br>${g}</div><div class="dhikr"><b>الهجري</b><br>${h}</div>`;
- }else if(type==="daily"){
-   c.innerHTML=`<h3>💡 رسالة اليوم</h3><div class="dhikr">«إن الله يحب إذا عمل أحدكم عملاً أن يتقنه»</div><div class="dhikr">ابدأ يومك بنية طيبة، واجعل عملك أمانة.</div>`;
- }else if(type==="contact"){
-   c.innerHTML=`<h3>☎️ تواصل معنا</h3><div class="dhikr">للاستفسارات والملاحظات يمكن التواصل مع المتابعة المركزية من خلال بيانات التواصل المعتمدة داخل الموقع.</div>`;
- }else{
-   c.innerHTML=`<h3>📚 مكتبة العامل</h3>
-   <div class="library-item">📄 تعليمات العمل والالتزام</div>
-   <div class="library-item">📄 نماذج المتابعة المركزية</div>
-   <div class="library-item">📄 اللوائح والتعليمات</div>
-   <div class="library-item"><b>📎 إرفاق ملف حديث</b><br><small>هذه واجهة تجهيز للمرفقات؛ ربط الرفع المباشر بمخزن Supabase يحتاج صلاحيات التخزين.</small><br><input type="file" id="libraryFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"></div>`;
- }
- document.getElementById("serviceModal").classList.add("open");
-}
-
-function updatePostLoginLibrary(){
-  const candidates=[
-    document.querySelector('[data-authenticated="true"]'),
-    document.querySelector('.dashboard'),
-    document.querySelector('#dashboard'),
-    document.querySelector('#app.logged-in'),
-    document.querySelector('.user-dashboard')
-  ];
-  const visible=candidates.some(el=>el && getComputedStyle(el).display!=="none" && el.offsetParent!==null);
-  document.querySelectorAll('.post-login-library').forEach(el=>el.classList.toggle('is-authenticated',visible));
-}
-function closeService(){document.getElementById("serviceModal").classList.remove("open")}
-setInterval(updatePostLoginLibrary,1200);
-updatePostLoginLibrary();
-
-</script>
-
-<script id="services-toggle-final-script">
-function toggleWorkerServices(){
-  const g=document.getElementById('workerServicesGrid');
-  if(!g)return;
-  const hidden=g.style.display==='none'||getComputedStyle(g).display==='none';
-  g.style.display=hidden?'grid':'none';
-}
-</script>
-
-<script id="library-visibility-final">
+<style id="worker-services-clean-css">
+.shared-library-grid,.service-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.service-card{background:linear-gradient(135deg,#fff,#f4fbff);border:1px solid #dceaf3;border-radius:18px;padding:16px;box-shadow:0 8px 22px rgba(7,27,53,.07)}
+.service-card h3{margin-top:0;color:#073b5c}.service-icon{font-size:32px}.service-card p{color:#687887;line-height:1.7}
+.shared-file{border:1px solid #e0e8ee;border-radius:15px;padding:13px;margin:9px 0;background:#fff}
+.shared-file .meta{font-size:12px;color:#748394;margin-top:5px}
+.shared-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.shared-actions button{width:auto;min-width:100px}
+.req-status{display:inline-block;padding:5px 10px;border-radius:999px;font-weight:800;font-size:12px;background:#eef5fa}
+.req-pending{background:#fff5cf;color:#8a6512}.req-approved{background:#e8f8ef;color:#137333}.req-rejected{background:#fff0f0;color:#b42318}
+.admin-chat{max-height:360px;overflow:auto;border:1px solid #e0e8ee;border-radius:14px;padding:10px;background:#f8fbfd}
+.chat-msg{padding:10px 12px;border-radius:13px;margin:7px 0;background:#fff;border:1px solid #e4ebf0}
+.chat-msg.admin{border-right:4px solid #1261a0}.chat-msg.worker{border-right:4px solid #d4af37}
+#workerPage #workerServices .service-grid{display:flex;flex-direction:column;gap:12px}
+#workerPage #workerServices .service-card{width:100%;box-sizing:border-box}
+#workerPage #myAttendance,#workerPage #myPayslip{display:block}
+</style>
+<script>
 (function(){
-  function updateLibrary(){
-    const libs=document.querySelectorAll('.post-login-library');
-    if(!libs.length)return;
-    const markers=[
-      document.querySelector('[data-authenticated="true"]'),
-      document.querySelector('.dashboard'),
-      document.querySelector('#dashboard'),
-      document.querySelector('.user-dashboard')
-    ];
-    const logged=markers.some(el=>{
-      if(!el)return false;
-      const s=getComputedStyle(el);
-      return s.display!=='none' && el.offsetParent!==null;
+  const originalShowTab = window.showTab;
+  const originalLoadWorker = window.loadWorker;
+  const originalLoadAdmin = window.loadAdmin;
+
+  function serviceShell(){
+    return `
+      <div id="workerServices" class="card">
+        <h2>🧰 خدمات العاملين</h2>
+        <p class="muted"></p>
+        <div class="service-grid">
+          <div class="service-card"><div class="service-icon">📚</div><h3>مكتبة العاملين</h3><p>تعليمات التشغيل والنماذج والمستندات المشتركة المتاحة لجميع العاملين.</p><button onclick="openWorkerService('library')">📂 فتح المكتبة</button></div>
+          <div class="service-card"><div class="service-icon">💰</div><h3>طلب سلفة مالية</h3><p>حدد المبلغ المطلوب وأرسل الطلب للمتابعة المركزية مع متابعة حالته.</p><button onclick="openWorkerService('loan')">➕ طلب سلفة</button></div>
+          <div class="service-card"><div class="service-icon">💬</div><h3>التحدث إلى الأدمن</h3><p>إرسال استفسار أو طلب مباشرة إلى الأدمن مع متابعة الرد.</p><button onclick="openWorkerService('chat')">💬 بدء محادثة</button></div>
+          <div class="service-card"><div class="service-icon">📣</div><h3>الإعلانات العامة</h3><p>عرض التعليمات والإعلانات المهمة المنشورة لجميع العاملين.</p><button onclick="openWorkerService('library')">👁️ عرض</button></div>
+        </div>
+        <div id="workerServiceArea"></div>
+      </div>`;
+  }
+
+  function adminShell(){
+    return `
+      <div id="centralAdminServices" class="card">
+        <h2>🧰 خدمات العاملين — الإدارة</h2>
+        <div class="service-grid">
+          <div class="service-card"><div class="service-icon">📚</div><h3>مكتبة العاملين المشتركة</h3><p>رفع تعليمات التشغيل والنماذج والمستندات التي تظهر لجميع العاملين.</p><button onclick="adminSharedLibrary()">📚 إدارة المكتبة</button></div>
+          <div class="service-card"><div class="service-icon">💰</div><h3>طلبات السلف</h3><p>مراجعة الطلبات وتحديد الحالة والملاحظات.</p><button onclick="adminLoanRequests()">💰 مراجعة الطلبات</button></div>
+          <div class="service-card"><div class="service-icon">💬</div><h3>محادثات العاملين</h3><p>استقبال استفسارات العاملين والرد عليها.</p><button onclick="adminChatCenter()">💬 فتح المحادثات</button></div>
+        </div>
+        <div id="adminServiceArea" style="margin-top:14px"></div>
+      </div>`;
+  }
+
+  function ensureWorkerServices(){
+    const page=document.getElementById("workerPage");
+    if(!page || document.getElementById("workerServices")) return;
+    const holder=document.createElement("div");
+    holder.innerHTML=serviceShell();
+    // Put services immediately after the profile/personal-data card.
+    const cards=[...page.querySelectorAll(".card")];
+    const profileCard=cards.find(c=>/الملف الشخصي|البيانات الشخصية|معلومات العامل/.test(c.innerText||""));
+    if(profileCard && profileCard.parentNode){
+      profileCard.parentNode.insertBefore(holder, profileCard.nextSibling);
+    }else{
+      const first=page.firstElementChild;
+      page.insertBefore(holder, first?.nextSibling || null);
+    }
+  }
+  function ensureAdminServices(){
+    const home=document.getElementById("home");
+    if(!home || document.getElementById("centralAdminServices")) return;
+    const holder=document.createElement("div");
+    holder.innerHTML=adminShell();
+    home.appendChild(holder);
+  }
+
+  window.openWorkerService=async function(kind){
+    const box=document.getElementById("workerServiceArea"); if(!box)return;
+    if(kind==="library") { await loadSharedLibrary(box); box.scrollIntoView({behavior:"smooth",block:"start"}); return; }
+    if(kind==="loan") { renderLoanForm(box); box.scrollIntoView({behavior:"smooth",block:"start"}); return; }
+    if(kind==="chat") { await loadWorkerChat(box); box.scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  };
+
+  window.loadSharedLibrary=async function(box){
+    box.innerHTML='<div class="card"><h3>📚 مكتبة العاملين</h3><p class="muted">جارٍ تحميل التعليمات والنماذج المشتركة...</p></div>';
+    const r=await db.from("shared_library").select("id,title,description,category,file_path,file_name,file_url,created_at").eq("is_published",true).order("created_at",{ascending:false});
+    if(r.error){box.innerHTML=`<div class="card"><p class="error">تعذر تحميل المكتبة: ${esc(r.error.message)}<br><small>إذا كان هذا أول تشغيل، طبّق ملف إعداد Supabase المرفق مع النسخة.</small></p></div>`;return;}
+    const rows=r.data||[];
+    box.innerHTML=`<div class="card"><h3>📚 مكتبة العاملين المشتركة</h3><p class="muted">هذه المكتبة مشتركة وتظهر لجميع العاملين المسجلين، وليست مرتبطة بعامل محدد.</p>
+      <div class="shared-library-grid">${rows.length?rows.map(x=>`<div class="shared-file"><b>📄 ${esc(x.title)}</b><div>${esc(x.description||"")}</div><div class="meta">${esc(x.category||"عام")} — ${x.created_at?new Date(x.created_at).toLocaleString("ar-EG"):""}</div><div class="shared-actions"><button onclick="openSharedFile('${esc(x.id)}','${esc(x.file_path||"")}','${esc(x.file_url||"")}')">👁️ فتح</button></div></div>`).join(""):"<p class='muted'>لا توجد تعليمات أو نماذج منشورة حاليًا.</p>"}</div></div>`;
+  };
+
+  window.openSharedFile=async function(id,path,url){
+    if(url){window.open(url,"_blank","noopener");return;}
+    if(!path){alert("لا يوجد ملف مرفق.");return;}
+    const r=await db.storage.from("worker-documents").createSignedUrl(path,600);
+    if(r.error){alert("تعذر فتح الملف: "+r.error.message);return;}
+    window.open(r.data.signedUrl,"_blank","noopener");
+  };
+
+  window.renderLoanForm=function(box){
+    box.innerHTML=`<div class="card"><h3>💰 طلب سلفة مالية</h3><p class="muted">أدخل المبلغ المطلوب والسبب. سيتم تسجيل الطلب للمتابعة المركزية.</p>
+      <div class="formgrid"><input id="loanAmount" type="number" min="1" step="1" placeholder="💵 المبلغ بالجنيه"><input id="loanReason" placeholder="سبب طلب السلفة"></div>
+      <textarea id="loanNotes" rows="4" placeholder="ملاحظات إضافية (اختياري)"></textarea>
+      <button onclick="submitLoanRequest()">📨 إرسال الطلب</button><p id="loanMsg"></p></div>
+      <div class="card"><h3>📋 طلباتي السابقة</h3><div id="myLoanRequests">جارٍ التحميل...</div></div>`;
+    loadMyLoanRequests();
+  };
+
+  window.submitLoanRequest=async function(){
+    const amount=Number(document.getElementById("loanAmount")?.value||0),reason=document.getElementById("loanReason")?.value.trim(),notes=document.getElementById("loanNotes")?.value.trim()||"",msg=document.getElementById("loanMsg");
+    if(!amount||amount<=0||!reason){msg.className="error";msg.textContent="حدد مبلغًا صحيحًا واكتب سبب الطلب.";return;}
+    const r=await db.from("financial_requests").insert({worker_id:window.currentWorkerId,request_type:"سلفة مالية",amount,reason,notes,status:"قيد المراجعة"});
+    if(r.error){msg.className="error";msg.textContent="تعذر إرسال الطلب: "+r.error.message;return;}
+    msg.className="success";msg.textContent="تم إرسال طلب السلفة بنجاح.";document.getElementById("loanAmount").value="";document.getElementById("loanReason").value="";document.getElementById("loanNotes").value="";loadMyLoanRequests();
+  };
+
+  window.loadMyLoanRequests=async function(){
+    const box=document.getElementById("myLoanRequests");if(!box||!window.currentWorkerId)return;
+    const r=await db.from("financial_requests").select("id,amount,reason,notes,status,admin_notes,created_at").eq("worker_id",window.currentWorkerId).eq("request_type","سلفة مالية").order("created_at",{ascending:false}).limit(30);
+    if(r.error){box.innerHTML=`<p class="error">${esc(r.error.message)}</p>`;return;}
+    box.innerHTML=(r.data||[]).map(x=>`<div class="shared-file"><b>${fmtMoney(x.amount)}</b> — ${esc(x.reason)} <span class="req-status ${x.status==="مقبول"?"req-approved":x.status==="مرفوض"?"req-rejected":"req-pending"}">${esc(x.status||"قيد المراجعة")}</span><div class="meta">${new Date(x.created_at).toLocaleString("ar-EG")}</div>${x.notes?`<div>${esc(x.notes)}</div>`:""}${x.admin_notes?`<div class="muted">رد الإدارة: ${esc(x.admin_notes)}</div>`:""}</div>`).join("")||"<p class='muted'>لا توجد طلبات سابقة.</p>";
+  };
+
+  window.loadWorkerChat=async function(box){
+    box.innerHTML=`<div class="card"><h3>💬 التحدث إلى الأدمن</h3><div id="workerChatMessages" class="admin-chat">جارٍ تحميل المحادثة...</div><textarea id="workerChatText" rows="3" placeholder="اكتب رسالتك للأدمن..."></textarea><button onclick="sendWorkerChat()">📨 إرسال</button><p id="workerChatMsg"></p></div>`;
+    await refreshWorkerChat();
+  };
+  window.refreshWorkerChat=async function(){
+    const box=document.getElementById("workerChatMessages");if(!box||!window.currentWorkerId)return;
+    const r=await db.from("admin_messages").select("id,sender_type,message,created_at").eq("worker_id",window.currentWorkerId).order("created_at",{ascending:true}).limit(100);
+    if(r.error){box.innerHTML=`<p class="error">${esc(r.error.message)}</p>`;return;}
+    box.innerHTML=(r.data||[]).map(x=>`<div class="chat-msg ${x.sender_type==="admin"?"admin":"worker"}"><b>${x.sender_type==="admin"?"👨‍💼 الأدمن":"👤 أنت"}</b><div>${esc(x.message)}</div><small class="muted">${new Date(x.created_at).toLocaleString("ar-EG")}</small></div>`).join("")||"<p class='muted'>ابدأ المحادثة برسالة جديدة.</p>";
+    box.scrollTop=box.scrollHeight;
+  };
+  window.sendWorkerChat=async function(){
+    const text=document.getElementById("workerChatText")?.value.trim(),msg=document.getElementById("workerChatMsg");if(!text)return;
+    const r=await db.from("admin_messages").insert({worker_id:window.currentWorkerId,sender_type:"worker",message:text});
+    if(r.error){msg.className="error";msg.textContent="تعذر إرسال الرسالة: "+r.error.message;return;}
+    document.getElementById("workerChatText").value="";msg.className="success";msg.textContent="تم إرسال الرسالة.";refreshWorkerChat();
+  };
+
+  window.adminSharedLibrary=async function(){
+    const box=document.getElementById("adminServiceArea");if(!box)return;
+    box.innerHTML=`<div class="card"><h3>📚 إدارة مكتبة العاملين</h3><div class="formgrid"><input id="sharedTitle" placeholder="عنوان المستند / النموذج"><input id="sharedCategory" placeholder="التصنيف: تعليمات / نموذج / إعلان"><input id="sharedFile" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"></div><textarea id="sharedDescription" rows="3" placeholder="وصف مختصر"></textarea><button onclick="uploadSharedLibraryFile()">⬆️ نشر في المكتبة للجميع</button><p id="sharedAdminMsg"></p></div><div class="card"><h3>📋 الملفات المنشورة</h3><div id="adminSharedList">جارٍ التحميل...</div></div>`;
+    refreshAdminSharedLibrary();
+  };
+  window.uploadSharedLibraryFile=async function(){
+    const title=document.getElementById("sharedTitle").value.trim(),category=document.getElementById("sharedCategory").value.trim()||"عام",description=document.getElementById("sharedDescription").value.trim(),file=document.getElementById("sharedFile").files?.[0],msg=document.getElementById("sharedAdminMsg");
+    if(!title||!file){msg.className="error";msg.textContent="اكتب العنوان واختر الملف.";return;}
+    if(file.size>20*1024*1024){msg.className="error";msg.textContent="حجم الملف لا يتجاوز 20 ميجابايت.";return;}
+    const ext=(file.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"")||"bin",path=`shared/${Date.now()}-${crypto.randomUUID?.()||Math.random().toString(36).slice(2)}.${ext}`;
+    msg.className="muted";msg.textContent="جارٍ الرفع...";
+    const up=await db.storage.from("worker-documents").upload(path,file,{contentType:file.type||"application/octet-stream",upsert:false});
+    if(up.error){msg.className="error";msg.textContent="تعذر رفع الملف: "+up.error.message;return;}
+    const r=await db.from("shared_library").insert({title,description,category,file_path:path,file_name:file.name,is_published:true});
+    if(r.error){await db.storage.from("worker-documents").remove([path]);msg.className="error";msg.textContent="تم رفع الملف لكن تعذر تسجيله: "+r.error.message;return;}
+    msg.className="success";msg.textContent="تم نشر الملف لجميع العاملين.";document.getElementById("sharedTitle").value="";document.getElementById("sharedDescription").value="";document.getElementById("sharedFile").value="";refreshAdminSharedLibrary();
+  };
+  window.refreshAdminSharedLibrary=async function(){
+    const box=document.getElementById("adminSharedList");if(!box)return;
+    const r=await db.from("shared_library").select("id,title,description,category,file_path,file_name,is_published,created_at").order("created_at",{ascending:false});
+    if(r.error){box.innerHTML=`<p class="error">${esc(r.error.message)}</p>`;return;}
+    box.innerHTML=(r.data||[]).map(x=>`<div class="shared-file"><b>📄 ${esc(x.title)}</b><div>${esc(x.description||"")}</div><div class="meta">${esc(x.category||"عام")} — ${esc(x.file_name||"")}</div><div class="shared-actions"><button onclick="openSharedFile('${esc(x.id)}','${esc(x.file_path||"")}','')">👁️ فتح</button><button class="${x.is_published?"secondary":""}" onclick="toggleSharedPublish('${esc(x.id)}',${!x.is_published})">${x.is_published?"⏸️ إخفاء":"▶️ نشر"}</button><button class="danger" onclick="deleteSharedLibrary('${esc(x.id)}','${esc(x.file_path||"")}')">🗑️ حذف</button></div></div>`).join("")||"<p class='muted'>لا توجد ملفات.</p>";
+  };
+  window.toggleSharedPublish=async function(id,val){const r=await db.from("shared_library").update({is_published:val}).eq("id",id);if(r.error)alert(r.error.message);else refreshAdminSharedLibrary();};
+  window.deleteSharedLibrary=async function(id,path){if(!confirm("حذف هذا الملف من المكتبة؟"))return;await db.storage.from("worker-documents").remove([path]);const r=await db.from("shared_library").delete().eq("id",id);if(r.error)alert(r.error.message);else refreshAdminSharedLibrary();};
+
+  window.adminLoanRequests=async function(){
+    const box=document.getElementById("adminServiceArea");if(!box)return;
+    box.innerHTML=`<div class="card"><h3>💰 طلبات السلف المالية</h3><div id="adminLoanList">جارٍ التحميل...</div></div>`;
+    const r=await db.from("financial_requests").select("id,worker_id,amount,reason,notes,status,admin_notes,created_at,workers(full_name,worker_code)").eq("request_type","سلفة مالية").order("created_at",{ascending:false}).limit(100);
+    const list=document.getElementById("adminLoanList");
+    if(r.error){list.innerHTML=`<p class="error">${esc(r.error.message)}</p>`;return;}
+    list.innerHTML=(r.data||[]).map(x=>`<div class="shared-file"><b>👤 ${esc(x.workers?.full_name||"—")} — ${esc(x.workers?.worker_code||"")}</b><div style="margin-top:7px"><b>${fmtMoney(x.amount)}</b> — ${esc(x.reason)}</div><div class="meta">${new Date(x.created_at).toLocaleString("ar-EG")}</div>${x.notes?`<div>${esc(x.notes)}</div>`:""}<div class="formgrid"><select id="loanSt-${esc(x.id)}"><option ${x.status==="قيد المراجعة"?"selected":""}>قيد المراجعة</option><option ${x.status==="مقبول"?"selected":""}>مقبول</option><option ${x.status==="مرفوض"?"selected":""}>مرفوض</option></select><input id="loanNote-${esc(x.id)}" value="${esc(x.admin_notes||"")}" placeholder="ملاحظة الإدارة"></div><button onclick="updateLoanRequest('${esc(x.id)}')">💾 حفظ قرار الإدارة</button></div>`).join("")||"<p class='muted'>لا توجد طلبات.</p>";
+  };
+  window.updateLoanRequest=async function(id){const status=document.getElementById("loanSt-"+id).value,admin_notes=document.getElementById("loanNote-"+id).value.trim();const r=await db.from("financial_requests").update({status,admin_notes,updated_at:new Date().toISOString()}).eq("id",id);if(r.error)alert("تعذر تحديث الطلب: "+r.error.message);else adminLoanRequests();};
+
+  window.adminChatCenter=async function(){
+    const box=document.getElementById("adminServiceArea");if(!box)return;
+    box.innerHTML=`<div class="card"><h3>💬 محادثات العاملين</h3><select id="adminChatWorker" onchange="refreshAdminChat()"><option value="">اختر العامل...</option>${(workers||[]).map(w=>`<option value="${esc(w.id)}">${esc(w.worker_code)} — ${esc(w.full_name)}</option>`).join("")}</select><div id="adminChatMessages" class="admin-chat">اختر عاملًا.</div><textarea id="adminChatText" rows="3" placeholder="اكتب الرد..."></textarea><button onclick="sendAdminChat()">📨 إرسال الرد</button><p id="adminChatMsg"></p></div>`;
+  };
+  window.refreshAdminChat=async function(){
+    const wid=document.getElementById("adminChatWorker")?.value,box=document.getElementById("adminChatMessages");if(!wid||!box){return;}
+    const r=await db.from("admin_messages").select("id,sender_type,message,created_at").eq("worker_id",wid).order("created_at",{ascending:true}).limit(100);
+    if(r.error){box.innerHTML=`<p class="error">${esc(r.error.message)}</p>`;return;}
+    box.innerHTML=(r.data||[]).map(x=>`<div class="chat-msg ${x.sender_type==="admin"?"admin":"worker"}"><b>${x.sender_type==="admin"?"👨‍💼 الأدمن":"👤 العامل"}</b><div>${esc(x.message)}</div><small class="muted">${new Date(x.created_at).toLocaleString("ar-EG")}</small></div>`).join("")||"<p class='muted'>لا توجد رسائل.</p>";
+    box.scrollTop=box.scrollHeight;
+  };
+  window.sendAdminChat=async function(){
+    const wid=document.getElementById("adminChatWorker")?.value,text=document.getElementById("adminChatText")?.value.trim(),msg=document.getElementById("adminChatMsg");if(!wid||!text){msg.className="error";msg.textContent="اختر العامل واكتب الرد.";return;}
+    const r=await db.from("admin_messages").insert({worker_id:wid,sender_type:"admin",message:text});
+    if(r.error){msg.className="error";msg.textContent="تعذر إرسال الرد: "+r.error.message;return;}
+    document.getElementById("adminChatText").value="";msg.className="success";msg.textContent="تم إرسال الرد.";refreshAdminChat();
+  };
+
+  // نضيف الخدمات بعد تحميل الواجهة الأساسية.
+  window.addEventListener("load",()=>{
+    setTimeout(()=>{ensureWorkerServices();ensureAdminServices();},500);
+  });
+
+  // لو تم تسجيل الدخول لاحقًا، نتأكد من وجود الأقسام.
+  window.ensureCentralServices=()=>{ensureWorkerServices();ensureAdminServices();};
+})();
+</script>
+<script id="worker-display-clean">
+(function(){
+  function applyWorkerDisplay(){
+    const page=document.getElementById('workerPage');
+    if(!page) return;
+
+    // Keep the complete attendance and payroll sections intact.
+    ['myAttendance','myPayslip'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el && el.closest('.card')) el.closest('.card').style.display='';
     });
-    libs.forEach(el=>{
-      el.style.display=logged?'block':'none';
+
+    // Hide the two unwanted summary cards only in the worker view.
+    page.querySelectorAll('.summary-cards .stat').forEach(card=>{
+      const label=(card.querySelector('span')?.textContent||'').trim();
+      if(label==='غياب' || label==='مأمورية') card.style.display='none';
+    });
+
+    // Remove the words from worker-facing headings/labels without touching JS/database values.
+    const walker=document.createTreeWalker(page,NodeFilter.SHOW_TEXT);
+    const nodes=[]; let n;
+    while(n=walker.nextNode()) nodes.push(n);
+    nodes.forEach(node=>{
+      let t=node.nodeValue||'';
+      if(!t.trim()) return;
+      t=t.replace(/الحضور\s*والغياب/g,'سجل الحضور');
+      t=t.replace(/غياب\s*اليوم/g,'سجل اليوم');
+      t=t.replace(/مأمورية/g,'');
+      if(t.trim()==='غياب') t='';
+      node.nodeValue=t;
+    });
+
+    // Do not ask workers for a personal photo in the documents selector.
+    page.querySelectorAll('#docType option').forEach(opt=>{
+      if((opt.textContent||'').includes('صورة شخصية') || opt.value==='personal_photo') opt.remove();
+    });
+
+    // Keep month/year controls visible and populated by the original app.
+    ['myAttMonth','myAttYear','myMonth','myYear'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){el.style.visibility='visible';el.style.opacity='1';}
     });
   }
-  updateLibrary();
-  setInterval(updateLibrary,1000);
+
+  window.addEventListener('load',()=>setTimeout(applyWorkerDisplay,400));
+  window.addEventListener('load',()=>setTimeout(applyWorkerDisplay,1200));
+  const observer=new MutationObserver(()=>{ if(document.getElementById('workerPage')) applyWorkerDisplay(); });
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  window.applyWorkerDisplay=applyWorkerDisplay;
 })();
 </script>
 </body>
@@ -1383,4 +1478,3 @@ function toggleWorkerServices(){
 /* الشعار: صور فقط بدون أي كتابة */
 .brand-header .official-logo{width:270px!important;height:auto!important;margin:0 auto!important}
 </style>
- 
