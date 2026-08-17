@@ -2529,6 +2529,178 @@ body.fb-auth-mode #fbWorkerBar #fbWorkerName{white-space:nowrap;overflow:hidden;
 /* Services are always clickable and open in the central modal */
 #workerServices .service-card button,#centralAdminServices .service-card button{position:relative;z-index:3;pointer-events:auto!important}
 </style>
+
+<!-- FINAL FIX: worker document lock + worker advertisements -->
+<style id="final-worker-docs-ads-fix">
+.v15-upload.v15-locked{display:none!important}
+.v15-status.v15-done{color:#146c37;font-weight:800}
+.v15-account-complete{background:#eaf7ef;color:#146c37;border:1px solid #b9e2c8;border-radius:12px;padding:12px;margin-bottom:14px;font-weight:800}
+.v15-existing-empty{color:#6b7280}
+</style>
+<script id="final-worker-docs-ads-fix-script">
+(function(){
+  const types=['national_id_front','national_id_back','customs_permit','introduction_letter','other'];
+  const labels={national_id_front:'الرقم القومي — أمام',national_id_back:'الرقم القومي — خلف',customs_permit:'التصريح الجمركي',introduction_letter:'وثيقة التعارف',other:'مستندات أخرى'};
+  const stat={national_id_front:'v15s1',national_id_back:'v15s2',customs_permit:'v15s3',introduction_letter:'v15s4',other:'v15s5'};
+
+  async function identity(){
+    if(window.currentWorkerId) return window.currentWorkerId;
+    if(window.ensureIdentity){
+      try{ const id=await window.ensureIdentity(); if(id){window.currentWorkerId=id;return id;} }catch(e){}
+    }
+    const {data:{user}}=await db.auth.getUser();
+    if(!user) return null;
+    const r=await db.from('workers').select('id').eq('user_id',user.id).maybeSingle();
+    if(!r.error&&r.data){window.currentWorkerId=r.data.id;return r.data.id;}
+    return null;
+  }
+
+  function setLocked(type,locked){
+    const input=document.querySelector('#v15DocsOverlay [data-v15="'+type+'"]');
+    if(!input) return;
+    const label=input.closest('.v15-upload');
+    const s=document.getElementById(stat[type]);
+    if(locked){
+      if(label) label.classList.add('v15-locked');
+      if(s){s.textContent='مرفوع مسبقًا ✓';s.classList.add('v15-done');}
+    }else{
+      if(label) label.classList.remove('v15-locked');
+      if(s){s.textContent='لم يتم الرفع';s.classList.remove('v15-done');}
+    }
+  }
+
+  async function refresh(){
+    const id=await identity();
+    const box=document.getElementById('v15Existing');
+    if(!id||!box){return;}
+    box.textContent='جارٍ تحميل المستندات المحفوظة...';
+    const r=await db.from('worker_documents')
+      .select('id,document_type,file_path,file_name,uploaded_at,status')
+      .eq('worker_id',id).order('uploaded_at',{ascending:false});
+    if(r.error){
+      box.innerHTML='<span class="error">تعذر تحميل المستندات: '+String(r.error.message||'')+'</span>';
+      return;
+    }
+    const rows=r.data||[];
+    const present={};
+    rows.forEach(x=>{if(!present[x.document_type])present[x.document_type]=x;});
+    types.forEach(t=>setLocked(t,!!present[t]));
+
+    const count=types.filter(t=>present[t]).length;
+    const old=box.parentElement?.querySelector('.v15-account-complete');
+    if(old) old.remove();
+    if(count===types.length){
+      const notice=document.createElement('div');
+      notice.className='v15-account-complete';
+      notice.textContent='✅ تم رفع جميع مستنداتك المطلوبة مسبقًا — لا حاجة لإعادة رفعها.';
+      box.parentElement.insertBefore(notice,box);
+    }
+
+    if(!rows.length){
+      box.innerHTML='<span class="v15-existing-empty">لا توجد مستندات محفوظة حتى الآن.</span>';
+      return;
+    }
+    box.innerHTML=rows.map(x=>{
+      const title=labels[x.document_type]||x.file_name||'مستند';
+      const date=x.uploaded_at?new Date(x.uploaded_at).toLocaleString('ar-EG'):'—';
+      return '<div class="v15-row"><div><b>📄 '+esc(title)+'</b><div class="muted">'+esc(x.file_name||'')+'</div><div class="muted">تاريخ الرفع: '+date+'</div></div><button class="v15-view" type="button" data-p="'+encodeURIComponent(x.file_path||'')+'">👁️ عرض</button></div>';
+    }).join('');
+    box.querySelectorAll('.v15-view').forEach(b=>b.onclick=async()=>{
+      const u=await db.storage.from('worker-documents').createSignedUrl(decodeURIComponent(b.dataset.p||''),600);
+      if(u.error){alert('تعذر فتح المستند: '+u.error.message);return;}
+      window.open(u.data.signedUrl,'_blank','noopener');
+    });
+  }
+
+  async function lockedUpload(input){
+    const type=input?.dataset?.v15;
+    if(!type) return;
+    const id=await identity();
+    if(!id){alert('انتهت جلسة الدخول، سجل الدخول مرة أخرى.');input.value='';return;}
+    const existing=await db.from('worker_documents').select('id').eq('worker_id',id).eq('document_type',type).limit(1);
+    if(existing.data?.length){
+      alert('هذا المستند مرفوع بالفعل ولا يمكن رفعه مرة أخرى.');
+      input.value='';
+      await refresh();
+      return;
+    }
+    const file=input.files?.[0];
+    if(!file)return;
+    const msg=document.getElementById('v15Msg');
+    if(msg){msg.textContent='جاري رفع المستند...';msg.className='v15-msg show ok';}
+    try{
+      const {data:{user}}=await db.auth.getUser();
+      if(!user) throw new Error('جلسة الدخول غير صالحة.');
+      const safe=(file.name||'document').replace(/[^\w\u0600-\u06FF.\- ]/g,'_');
+      const folders={national_id_front:'الرقم_القومي/أمام',national_id_back:'الرقم_القومي/خلف',customs_permit:'التصريح_الجمركي',introduction_letter:'وثيقة_التعارف',other:'مستندات_أخرى'};
+      const path=user.id+'/مستنداتي/'+folders[type]+'/'+Date.now()+'_'+safe;
+      const up=await db.storage.from('worker-documents').upload(path,file,{upsert:false,contentType:file.type||'application/octet-stream'});
+      if(up.error)throw up.error;
+      const ins=await db.from('worker_documents').insert({
+        worker_id:id,document_type:type,file_path:path,file_name:file.name,mime_type:file.type||null,status:'pending'
+      });
+      if(ins.error){await db.storage.from('worker-documents').remove([path]);throw ins.error;}
+      input.value='';
+      if(msg){msg.textContent='تم حفظ المستند بنجاح. تم إيقاف إعادة رفع نفس المستند.';msg.className='v15-msg show ok';}
+      await refresh();
+    }catch(e){
+      input.value='';
+      if(msg){msg.textContent='تعذر إرفاق المستند: '+(e.message||e);msg.className='v15-msg show err';}
+    }
+  }
+
+  window.openV15DocsFixed=async function(){
+    const o=document.getElementById('v15DocsOverlay');
+    if(o)o.classList.add('v15-show');
+    await refresh();
+  };
+
+  // Replace the old uploader and opener.
+  document.addEventListener('change',e=>{
+    if(e.target.matches('#v15DocsOverlay [data-v15]')) lockedUpload(e.target);
+  },true);
+  window.addEventListener('load',()=>setTimeout(refresh,900));
+
+  // Correct the admin general announcement so it is actually visible in the worker "الإعلانات" service.
+  window.sendGeneralAnnouncement=async function(){
+    const text=document.getElementById('generalAnnouncementText')?.value.trim();
+    const m=document.getElementById('generalAnnouncementMsg');
+    if(!text){if(m){m.className='error';m.textContent='اكتب نص الإعلان.';}return;}
+    const rows=(window.workers||[]).map(w=>({
+      recipient_worker_id:w.id,
+      message:text,
+      title:'إعلان من المتابعة المركزية',
+      notification_type:'إعلان عام'
+    }));
+    if(!rows.length){if(m){m.className='error';m.textContent='لا توجد عمالة مسجلة.';}return;}
+    const r=await db.from('notifications').insert(rows);
+    if(r.error){if(m){m.className='error';m.textContent='تعذر نشر الإعلان: '+r.error.message;}return;}
+    const input=document.getElementById('generalAnnouncementText');if(input)input.value='';
+    if(m){m.className='success';m.textContent='تم نشر الإعلان لجميع العاملين، وسيظهر لهم داخل خدمة الإعلانات.';}
+    if(window.loadAdminNotifications) window.loadAdminNotifications();
+  };
+
+  // Make the worker announcements service show public ads reliably.
+  const oldOpen=window.openWorkerService;
+  window.openWorkerService=async function(kind){
+    if(kind!=='announcements') return oldOpen?oldOpen.apply(this,arguments):null;
+    const id=await identity();
+    const box=document.getElementById('workerServiceArea');
+    if(!box||!id)return;
+    const r=await db.from('notifications')
+      .select('id,message,title,notification_type,created_at,read_at')
+      .eq('recipient_worker_id',id)
+      .eq('notification_type','إعلان عام')
+      .order('created_at',{ascending:false}).limit(50);
+    if(r.error){box.innerHTML='<div class="card"><p class="error">تعذر تحميل الإعلانات: '+esc(r.error.message)+'</p></div>';return;}
+    box.innerHTML='<div class="card"><h3>📢 الإعلانات</h3>'+
+      ((r.data||[]).map(x=>'<div class="shared-file"><b>📢 '+esc(x.title||'إعلان عام')+'</b><div>'+esc(x.message||'')+'</div><div class="meta">'+new Date(x.created_at).toLocaleString('ar-EG')+(x.read_at?'':' — جديد')+'</div>'+(!x.read_at?'<button onclick="markNotificationRead(\''+esc(x.id)+'\');window.openWorkerService(\'announcements\')">✓ تمت القراءة</button>':'')+'</div>').join('')||'<p class="muted">لا توجد إعلانات عامة حاليًا.</p>')+
+      '</div>';
+    box.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+})();
+</script>
+
 </body>
 </html>
 <style>
@@ -2933,5 +3105,20 @@ function boot(){tile();setTimeout(tile,500);setTimeout(tile,1500)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();window.addEventListener('load',boot);
 document.addEventListener('change',e=>{if(e.target.matches('#v15DocsOverlay [data-v15]'))upload(e.target)});
 document.addEventListener('click',e=>{if(e.target.id==='v15DocsOverlay')window.closeV15Docs()});document.addEventListener('keydown',e=>{if(e.key==='Escape')window.closeV15Docs()});
+})();
+</script>
+
+<script id="final-worker-docs-events-fix">
+(function(){
+  document.addEventListener('change',function(e){
+    if(e.target.matches('#v15DocsOverlay [data-v15]')){e.stopImmediatePropagation();}
+  },true);
+  document.addEventListener('click',function(e){
+    const b=e.target.closest('.v15-docs-tile button');
+    if(b){
+      e.preventDefault(); e.stopImmediatePropagation();
+      if(window.openV15DocsFixed) window.openV15DocsFixed();
+    }
+  },true);
 })();
 </script>
