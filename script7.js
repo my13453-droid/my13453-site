@@ -139,9 +139,11 @@
     const femaleBox=q('#peerChatFemales'), maleBox=q('#peerChatMales'); if(!femaleBox||!maleBox)return;
     const me=await getPeerMe(myId);
     if(!me?.department){femaleBox.innerHTML=maleBox.innerHTML='<div class="peer-empty">لم يتم تحديد الإدارة لهذا الحساب.</div>';return;}
-    const r=await db.rpc('get_worker_chat_directory',{p_worker_id:myId});
+    // تحميل جميع العاملين من قاعدة البيانات ثم تصفيتهم محليًا حسب الإدارة والنوع،
+    // حتى يظهر العامل الجديد تلقائيًا بمجرد تسجيله وتحديد إدارته ونوعه.
+    const r=await db.from('workers').select('id,full_name,worker_code,department,gender,status').order('full_name',{ascending:true});
     if(r.error){femaleBox.innerHTML=maleBox.innerHTML='<div class="error">تعذر تحميل الزملاء: '+escHtml(r.error.message)+'</div>';return;}
-    const rows=(r.data||[]).filter(w=>w.id!==myId); window.peerDirectoryCache=rows;
+    const rows=(r.data||[]).filter(w=>w.id!==myId && normPeerText(w.department)===normPeerText(me.department)); window.peerDirectoryCache=rows;
     const myGender=peerGender(me.gender);
     const render=(arr,kind)=>arr.map(w=>{
       const normalizedGender=peerGender(w.gender), icon=kind==='female'?'👩':'👨', can=myGender===normalizedGender;
@@ -214,7 +216,37 @@
   window.openWorkerService=function(kind){return workerServiceOpen(kind)};
   window.adminSharedLibrary=libraryAdmin;
   window.adminChatCenter=adminChat;
-  window.adminLoanRequests=async function(){if(typeof workers==='undefined')return;openModal('💰 طلبات السلف','<div class="card"><div id="fbAdminLoans">جارٍ التحميل...</div></div>');const r=await db.from('financial_requests').select('id,worker_id,amount,status,admin_notes,created_at').eq('request_type','سلفة مالية').order('created_at',{ascending:false}).limit(100);if(r.error){q('#fbAdminLoans').innerHTML=`<p class="error">${escHtml(r.error.message)}</p>`;return}q('#fbAdminLoans').innerHTML=(r.data||[]).map(x=>{const w=(workers||[]).find(y=>y.id===x.worker_id);return `<div class="shared-file"><b>${escHtml(w?.full_name||'عامل')}</b> — ${fmtMoney(x.amount)} جنيه <span class="req-status ${x.status==='مقبول'?'req-approved':x.status==='مرفوض'?'req-rejected':'req-pending'}">${escHtml(x.status)}</span><div class="meta">${timeAgo(x.created_at)}</div></div>`}).join('')||'<p class="muted">لا توجد طلبات سلف.</p>'};
+  window.adminLoanRequests=async function(){
+    if(typeof workers==='undefined')return;
+    openModal('💰 طلبات السلف','<div class="card"><div id="fbAdminLoans">جارٍ التحميل...</div></div>');
+    const r=await db.from('financial_requests').select('id,worker_id,amount,status,admin_notes,created_at').eq('request_type','سلفة مالية').order('created_at',{ascending:false}).limit(100);
+    if(r.error){q('#fbAdminLoans').innerHTML=`<p class="error">${escHtml(r.error.message)}</p>`;return}
+    q('#fbAdminLoans').innerHTML=(r.data||[]).map(x=>{
+      const w=(workers||[]).find(y=>y.id===x.worker_id);
+      const status=x.status||'قيد المراجعة';
+      return `<div class="shared-file">
+        <b>${escHtml(w?.full_name||'عامل')}</b> — ${fmtMoney(x.amount)} جنيه
+        <span class="req-status ${status==='مقبول'?'req-approved':status==='مرفوض'?'req-rejected':'req-pending'}">${escHtml(status)}</span>
+        <div class="meta">${timeAgo(x.created_at)}</div>
+        <div class="formgrid" style="margin-top:10px">
+          <select id="fbLoanStatus-${escHtml(x.id)}">
+            <option value="قيد المراجعة" ${status==='قيد المراجعة'?'selected':''}>قيد المراجعة</option>
+            <option value="مقبول" ${status==='مقبول'?'selected':''}>مقبول</option>
+            <option value="مرفوض" ${status==='مرفوض'?'selected':''}>مرفوض</option>
+          </select>
+          <input id="fbLoanNote-${escHtml(x.id)}" value="${escHtml(x.admin_notes||'')}" placeholder="ملاحظة الإدارة (اختياري)">
+        </div>
+        <button type="button" onclick="fbUpdateLoan('${escHtml(x.id)}')">💾 حفظ قرار الأدمن</button>
+      </div>`;
+    }).join('')||'<p class="muted">لا توجد طلبات سلف.</p>';
+  };
+  window.fbUpdateLoan=async function(id){
+    const status=q('#fbLoanStatus-'+id)?.value, admin_notes=q('#fbLoanNote-'+id)?.value.trim()||'';
+    if(!status)return;
+    const r=await db.from('financial_requests').update({status,admin_notes,updated_at:new Date().toISOString()}).eq('id',id);
+    if(r.error){alert('تعذر حفظ قرار السلفة: '+r.error.message);return;}
+    await window.adminLoanRequests();
+  };
   window.adminOverview=async function(){openModal('📊 ملخص المتابعة المركزية','<div class="card"><p>يمكنك مراجعة الطلبات والمستندات والتنبيهات من لوحة المتابعة.</p><div class="grid"><div class="stat"><span>العمال</span><b>'+(typeof workers!=='undefined'?workers.length:0)+'</b></div></div></div>')};
 
   function boot(){ensureServiceModal();const stale=q('#serviceModalBackdrop');if(stale&&stale.classList.contains('hidden'))stale.style.display='none';cleanServiceCards();injectBars();refreshFbBars();loadFbDropData();}

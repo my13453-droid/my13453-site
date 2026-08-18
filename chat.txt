@@ -1,0 +1,326 @@
+</style>
+
+<style id="v12-worker-chat-gender-docs-fix">
+/* العامل يرى نوعه فقط داخل دليل الدردشة */
+.peer-chat-section.peer-gender-hidden,.peer-gender-hidden{display:none!important}
+#peerChatFemales.peer-gender-hidden,#peerChatMales.peer-gender-hidden{display:none!important}
+.worker-doc-existing{margin-top:14px;padding:14px;border:1px solid #e3e8ee;border-radius:14px;background:#f8fbfd}
+.worker-doc-existing h4{margin:0 0 10px;color:#0b2342}
+.worker-doc-existing-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;margin-top:8px;border:1px solid #e5e7eb;border-radius:11px;background:#fff}
+.worker-doc-existing-row .doc-existing-meta{min-width:0}
+.worker-doc-existing-row .doc-existing-name{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.worker-doc-existing-row .doc-existing-date{font-size:12px;color:#7a8691;margin-top:4px}
+.worker-doc-existing-row button{width:auto!important;margin:0!important;padding:8px 12px!important}
+@media(max-width:650px){.worker-doc-existing-row{align-items:flex-start;flex-direction:column}.worker-doc-existing-row button{width:100%!important}}
+</style>
+<script id="v12-worker-chat-gender-docs-fix-script">
+(function(){
+  const $=s=>document.querySelector(s);
+  const escx=v=>typeof escHtml==='function'?escHtml(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function norm(v){return String(v||'').trim().replace(/[إأآ]/g,'ا').replace(/[ى]/g,'ي').replace(/[ة]/g,'ه').replace(/[ـ]/g,'').replace(/\s+/g,' ').toLowerCase();}
+  function gender(v){const x=norm(v);if(x.includes('انث'))return 'أنثى';if(x.includes('ذكر'))return 'ذكر';return String(v||'').trim();}
+
+  /* إخفاء قسم النوع الآخر بالكامل، وليس فقط منع الضغط عليه. */
+  function hideOppositeGenderSection(){
+    const females=$('#peerChatFemales'), males=$('#peerChatMales');
+    if(!females||!males)return;
+    const sectionFor=el=>el?.previousElementSibling;
+    const meGender=window.__workerChatGender;
+    if(meGender==='أنثى'){
+      females.classList.remove('peer-gender-hidden'); sectionFor(females)?.classList.remove('peer-gender-hidden');
+      males.classList.add('peer-gender-hidden'); sectionFor(males)?.classList.add('peer-gender-hidden');
+    }else if(meGender==='ذكر'){
+      males.classList.remove('peer-gender-hidden'); sectionFor(males)?.classList.remove('peer-gender-hidden');
+      females.classList.add('peer-gender-hidden'); sectionFor(females)?.classList.add('peer-gender-hidden');
+    }
+  }
+
+  async function getOwnWorker(){
+    if(!window.db)return null;
+    const {data:{user}}=await db.auth.getUser();
+    if(!user)return null;
+    const r=await db.from('workers').select('id,full_name,department,gender,status').eq('user_id',user.id).maybeSingle();
+    if(r.error||!r.data)return null;
+    window.currentWorkerId=r.data.id;
+    window.__workerChatGender=gender(r.data.gender);
+    return r.data;
+  }
+
+  /* نضمن أن قائمة الرسائل العلوية لا تعرض أي محادثة مع النوع الآخر. */
+  const oldLoadFbDropData=window.loadFbDropData;
+  if(typeof oldLoadFbDropData==='function'&&!oldLoadFbDropData.__v12Wrapped){
+    const wrapped=async function(){
+      await oldLoadFbDropData.apply(this,arguments);
+      const me=await getOwnWorker();
+      if(!me)return;
+      const list=$('#fbWorkerMsgList');
+      if(!list)return;
+      const allowed=await db.rpc('get_worker_chat_directory',{p_worker_id:me.id});
+      if(allowed.error)return;
+      const ids=new Set((allowed.data||[]).map(x=>String(x.id)));
+      list.querySelectorAll('[onclick*="openPeerFromTop"]').forEach(el=>{
+        const m=el.getAttribute('onclick')?.match(/openPeerFromTop\('([^']+)'\)/);
+        if(m&&!ids.has(String(m[1])))el.remove();
+      });
+      if(!list.querySelector('[onclick*="openPeerFromTop"]'))list.innerHTML='<div class="fb-empty">لا توجد محادثات مع زملاء من نفس النوع.</div>';
+    };
+    wrapped.__v12Wrapped=true;window.loadFbDropData=wrapped;
+  }
+
+  /* إعادة تعريف فولدر تواصل العاملين بشكل يمنع ظهور القسم الآخر تمامًا. */
+  const oldWorkerPeerChat=window.workerPeerChat;
+  if(typeof oldWorkerPeerChat==='function'&&!oldWorkerPeerChat.__v12Wrapped){
+    const wrapped=async function(){
+      const me=await getOwnWorker();
+      if(me)window.__workerChatGender=gender(me.gender);
+      const result=await oldWorkerPeerChat.apply(this,arguments);
+      setTimeout(hideOppositeGenderSection,100);
+      setTimeout(hideOppositeGenderSection,500);
+      return result;
+    };
+    wrapped.__v12Wrapped=true;window.workerPeerChat=wrapped;
+  }
+
+  /* مستنداتي: تحديد العامل من جلسة الدخول أولًا، ثم عرض كل ما رفعه هذا العامل. */
+  window.loadMyDocuments=async function(){
+    const box=$('#myDocumentsList');
+    if(!box)return;
+    const me=await getOwnWorker();
+    if(!me){box.innerHTML='<p class="error">تعذر تحديد حساب العامل الحالي.</p>';return;}
+    const r=await db.from('worker_documents')
+      .select('id,document_type,file_path,file_name,uploaded_at,status,notes')
+      .eq('worker_id',me.id)
+      .order('uploaded_at',{ascending:false});
+    if(r.error){box.innerHTML='<p class="error">تعذر تحميل مستنداتك: '+escx(r.error.message)+'</p>';return;}
+    const docs=r.data||[];
+    const labels={
+      id_front:'صورة الرقم القومي — أمام',id_back:'صورة الرقم القومي — خلف',
+      national_id_front:'بطاقة الرقم القومي — الوجه الأمامي',national_id_back:'بطاقة الرقم القومي — الوجه الخلفي',
+      customs_permit:'صورة التصريح الجمركي',identification_document:'وثيقة التعارف',
+      introduction_letter:'وثيقة التعارف',access_permit:'تصريح الدخول',personal_photo:'صورة شخصية',other:'مستندات أخرى',
+      national_id:'بطاقة الرقم القومي'
+    };
+    if(!docs.length){box.innerHTML='<div class="worker-doc-existing"><h4>📂 مستنداتي السابقة</h4><p class="muted">لم يتم العثور على مستندات مرفوعة لهذا الحساب.</p></div>'; const inline=document.getElementById('workerDocumentsInline'); if(inline) inline.innerHTML=box.innerHTML; return;}
+    const groups={};
+    docs.forEach(d=>(groups[d.document_type||'other']??=[]).push(d));
+    const parts=[];
+    for(const [type,items] of Object.entries(groups)){
+      parts.push('<div class="worker-doc-existing"><h4>📁 '+escx(labels[type]||type)+'</h4>');
+      for(const d of items){
+        const status=d.status==='مكتمل'?'مكتمل ✓':d.status==='مرفوض'?'مرفوض':'تم الرفع ✓';
+        parts.push('<div class="worker-doc-existing-row"><div class="doc-existing-meta"><div class="doc-existing-name">'+escx(d.file_name||labels[type]||'مستند')+'</div><div class="doc-existing-date">📅 '+escx(d.uploaded_at?new Date(d.uploaded_at).toLocaleString('ar-EG'):'—')+' • <b>'+escx(status)+'</b></div>'+(d.notes?'<div class="doc-existing-date">📝 '+escx(d.notes)+'</div>':'')+'</div><button type="button" onclick="openMyDocument(\''+String(d.file_path||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">👁️ عرض المستند</button></div>');
+      }
+      parts.push('</div>');
+    }
+    box.innerHTML=parts.join(''); const inline=document.getElementById('workerDocumentsInline'); if(inline) inline.innerHTML=parts.join('');
+
+    /* تحديث حالات فولدرات الرفع الحالية */
+    const latest={};docs.forEach(d=>{if(!latest[d.document_type]||new Date(d.uploaded_at||0)>new Date(latest[d.document_type].uploaded_at||0))latest[d.document_type]=d;});
+    const statusMap={id_front:'docStatusIdFront',id_back:'docStatusIdBack',customs_permit:'docStatusCustoms',identification_document:'docStatusIntro',other:'docStatusOther'};
+    Object.entries(statusMap).forEach(([type,id])=>{const el=document.getElementById(id),d=latest[type];if(el&&d)el.textContent='تم الرفع ✓ '+(d.status==='مكتمل'?'— مكتمل':'— محفوظ');});
+  };
+
+  /* بعد فتح فولدر مستنداتي أو رفع ملف، أعد تحميل القائمة فورًا. */
+  const oldOpenWorkerService=window.openWorkerService;
+  if(typeof oldOpenWorkerService==='function'&&!oldOpenWorkerService.__v12DocsWrapped){
+    const wrapped=async function(kind){
+      const r=await oldOpenWorkerService.apply(this,arguments);
+      if(kind==='mydocs')setTimeout(()=>window.loadMyDocuments(),250);
+      return r;
+    };
+    wrapped.__v12DocsWrapped=true;window.openWorkerService=wrapped;
+  }
+
+  const oldUploadV8=window.uploadWorkerDocumentV8;
+  if(typeof oldUploadV8==='function'&&!oldUploadV8.__v12Wrapped){
+    const wrapped=async function(input){
+      const r=await oldUploadV8.apply(this,arguments);
+      setTimeout(()=>window.loadMyDocuments(),350);
+      return r;
+    };
+    wrapped.__v12Wrapped=true;window.uploadWorkerDocumentV8=wrapped;
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(async()=>{hideOppositeGenderSection();try{await getWorkerIdentity();await loadMyDocuments();}catch(e){}},900));
+  else setTimeout(async()=>{hideOppositeGenderSection();try{await getWorkerIdentity();await loadMyDocuments();}catch(e){}},900);
+  
+})();
+</script>
+
+<style>.v15-status-pending{color:#b45309;font-weight:800}.v15-status-complete{color:#15803d;font-weight:800}.v15-status-rejected{color:#b91c1c;font-weight:800}</style>
+
+<style id="worker-service-single-view-fix">
+/* إصلاح عرض خدمات العاملين: خدمة واحدة فقط في كل مرة، بدون ترك الخدمة السابقة أو النزول لنهاية الصفحة */
+.worker-service-hidden-view{display:none!important}
+#workerServices .service-card.service-active{outline:2px solid rgba(12,95,150,.18);box-shadow:0 10px 24px rgba(12,95,150,.10)}
+#workerServiceArea:empty{display:none!important}
+</style>
+<script id="worker-service-single-view-fix-script">
+(function(){
+  const q=s=>document.querySelector(s);
+  const fixedSelectors=['#myAttendance','#myPayslip','#workerDocumentsInlineCard','#workerPersonalDocumentsCard'];
+  function hidePrevious(){
+    const area=q('#workerServiceArea');
+    if(area) area.innerHTML='';
+    fixedSelectors.forEach(sel=>{
+      const el=q(sel); if(!el)return;
+      const card=el.closest('.card')||el;
+      card.classList.add('worker-service-hidden-view');
+      card.classList.remove('service-active');
+    });
+    document.querySelectorAll('#workerServices .service-card.service-active').forEach(x=>x.classList.remove('service-active'));
+  }
+  function mark(btn){
+    const card=btn?.closest?.('.service-card');
+    if(card) card.classList.add('service-active');
+  }
+  function restoreFixed(kind){
+    const sel=kind==='attendance'?'#myAttendance':kind==='payslip'?'#myPayslip':null;
+    if(!sel)return;
+    const el=q(sel);if(!el)return;
+    const card=el.closest('.card')||el;
+    card.classList.remove('worker-service-hidden-view');
+    card.classList.add('service-active');
+  }
+  function handleClick(e){
+    const btn=e.target.closest?.('#workerServices .service-card button');
+    if(!btn)return;
+    const card=btn.closest('.service-card');
+    const title=card?.querySelector('h3')?.textContent?.trim()||'';
+    hidePrevious(); mark(btn);
+    /* مستنداتي ومفردات المرتب لهما نافذة مستقلة بالفعل؛ لا تسمح لأي خدمة قديمة بالبقاء خلفها. */
+    if(/مستنداتي/.test(title)||/مفردات المرتب/.test(title)) return;
+    /* الحضور فقط يظهر في مكانه الأصلي بعد إخفاء باقي الخدمات. */
+    if(/سجلي/.test(title)){
+      setTimeout(()=>restoreFixed('attendance'),0);
+      return;
+    }
+  }
+  /* capture=true حتى يسبق معالجات openWorkerService القديمة الكثيرة داخل الملف. */
+  document.addEventListener('click',handleClick,true);
+
+  /* عند فتح خدمة جديدة بالـJS من داخل خدمة أخرى، امسح الخدمة السابقة أولًا. */
+  const oldOpen=window.openWorkerService;
+  if(typeof oldOpen==='function' && !oldOpen.__singleViewFix){
+    const wrapped=async function(kind){
+      hidePrevious();
+      const r=await oldOpen.apply(this,arguments);
+      if(kind==='attendance') restoreFixed('attendance');
+      return r;
+    };
+    wrapped.__singleViewFix=true;
+    window.openWorkerService=wrapped;
+  }
+})();
+</script>
+
+
+<script id="global-peerchat-helpers-fix">
+(function(){
+  // جعل دوال هوية العامل متاحة عالميًا للنسخ اللاحقة من كود التواصل.
+  window.getAuthWorkerIdentity = window.getAuthWorkerIdentity || (async function(){
+    const {data:{user}} = await db.auth.getUser();
+    if(!user) return null;
+    const r = await db.from('workers').select('id,full_name,worker_code,department,gender,status,user_id').eq('user_id',user.id).maybeSingle();
+    if(r.error || !r.data) return null;
+    window.currentWorkerId = r.data.id;
+    return r.data.id;
+  });
+  window.getPeerMe = window.getPeerMe || (async function(myId){
+    const r = await db.from('workers').select('id,full_name,worker_code,department,gender,status,user_id').eq('id',myId).maybeSingle();
+    return r.data || null;
+  });
+})();
+</script>
+<script id="final-peer-loan-fix">
+(function(){
+  const q=s=>document.querySelector(s);
+  const eh=v=>typeof esc==='function'?esc(v):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const nt=v=>String(v||'').trim().replace(/[إأآ]/g,'ا').replace(/[ى]/g,'ي').replace(/[ة]/g,'ه').replace(/[ـ]/g,'').replace(/\s+/g,' ').toLowerCase();
+  const FEMALE_NAMES=new Set('حبيبه حبيبة هبه هبة هبه مريم منى مني ساره سارة سمر سما سماء سلمى سلمى ندى ندا نورا نوره نورة نورهان نور حنان ايمان إيمان اسراء إسراء اسراء دعاء داليا دانه دانا دنيا ريهام ريم رنا رانيا رحاب رباب زينب زينب فاطمه فاطمة فريده فريدة فرح ملك مَلَك منال مها مي مياده ميادة ميرنا ميرا ميار مريم مروه مروة نجلاء نجوى نجلاء ناهد نهى نهال نيفين ولاء وفاء ياسمين يارا يارا يارا ياسمينا ياسمين شيماء شروق شاديه شادية صفاء صابرين صبا عبير عائشه عائشة عفاف غاده غادة غدير لمياء لمياء ليلى ليلي ليان لوجين لوجينا لميس ليال هاجر هاجر هند هناء هبه حنان'.split(/\s+/));
+  const MALE_NAMES=new Set('احمد أحمد محمد محمود مصطفى مصطفي محمود حسن حسين حمدي حماده حمادة ابراهيم إبراهيم اسماعيل إسماعيل اسلام إسلام ايمن أيمن اشرف أشرف امير أمير أنور باسم بلال تامر تيسير جمال جلال حازم حاتم خالد خليل رامي رائد سامح سامي سعيد شريف شوقي صلاح طارق عادل عامر عبدالرحمن عبد الرحمن عبد الله عبدالله عبدالحليم عبدالفتاح عبدالمجيد عمر عمرو علاء علي عاطف فادي فؤاد كريم كمال ماجد مجدي ممدوح مراد مروان مسعد معاذ نبيل نادر هاني وائل وليد ياسر يحيى يحيي يوسف يونس زياد زكريا رجب رضا رمضان صبري صبحي طه طه'.split(/\s+/));
+  const inferGenderFromName=v=>{const full=nt(v), parts=full.split(' ').filter(Boolean), first=parts[0]||''; if(FEMALE_NAMES.has(first)||FEMALE_NAMES.has(full))return 'female'; if(MALE_NAMES.has(first)||MALE_NAMES.has(full))return 'male'; if(/(ه|ة|اء)$/.test(first)&&!/(به|به)$/.test(first))return 'female'; return '';};
+  const pg=v=>{const x=nt(v); if(/انث|female|woman|نساء|ستات|female worker|انثى/.test(x))return 'female'; if(/ذكر|male|man|رجال|راجل|male worker/.test(x))return 'male'; return '';};
+  const genderOf=w=>pg(w?.gender)||inferGenderFromName(w?.full_name||'');
+  const same=(a,b)=>a&&b&&nt(a.department)===nt(b.department)&&pg(a.gender)===pg(b.gender);
+  window.__finalPeerRows=[];
+
+  window.workerPeerChat=async function(){
+    const id=await getAuthWorkerIdentity();
+    if(!id){openCentralServiceModal('💬 تواصل العاملين','<div class="card"><p class="error">تعذر تحديد حساب العامل.</p></div>');return;}
+    const me=await getPeerMe(id);
+    if(!me){openCentralServiceModal('💬 تواصل العاملين','<div class="card"><p class="error">تعذر تحميل بيانات العامل.</p></div>');return;}
+    const g=pg(me.gender);
+    openCentralServiceModal('💬 تواصل العاملين',`<div class="peer-chat-folder">
+      <div class="peer-chat-folder-head"><div><h3 style="margin:0">💬 تواصل العاملين</h3><p class="muted" style="margin:6px 0 0">دردشة خاصة داخل نفس الإدارة، مع فصل العاملات والعاملين.</p></div><div class="peer-chat-badge">📁 ${eh(me.department||'الإدارة غير محددة')}</div></div>
+      <div class="peer-chat-note">📁 الإدارة: <b>${eh(me.department||'غير محددة')}</b> &nbsp; | &nbsp; 👤 أنت: <b>${eh(me.gender||'غير محدد')}</b></div>
+      <div class="peer-chat-layout"><aside class="peer-chat-list">
+        <div class="peer-chat-list-title">👥 زملاؤك في نفس الإدارة والنوع</div>
+        <div class="peer-chat-section">🏢 الإدارة</div><div id="peerChatAdmins">جارٍ التحميل...</div>
+        ${g==='female'?'<div class="peer-chat-section">👩 العاملات</div><div id="peerChatFemales">جارٍ التحميل...</div><div class="peer-chat-section peer-gender-hidden">👨 العاملون</div><div id="peerChatMales" class="peer-gender-hidden"></div>':'<div class="peer-chat-section">👨 العاملون</div><div id="peerChatMales">جارٍ التحميل...</div><div class="peer-chat-section peer-gender-hidden">👩 العاملات</div><div id="peerChatFemales" class="peer-gender-hidden"></div>'}
+      </aside><section class="peer-chat-window"><div id="peerChatHeader" class="peer-chat-header">💬 اختر زميلًا من القائمة</div><div id="peerChatMessages" class="peer-chat-messages"><div class="peer-empty">اختر زميلًا لبدء المحادثة.</div></div><div class="peer-compose"><textarea id="peerChatText" rows="2" maxlength="2000" placeholder="اكتب رسالة..."></textarea><button type="button" onclick="sendPeerChat()">📨 إرسال</button></div><div id="peerChatMsg" class="muted" style="padding:0 12px 8px"></div></section></div></div>`);
+    await loadPeerChatPeople(id);
+  };
+
+  window.loadPeerChatPeople=async function(myId){
+    const fb=q('#peerChatFemales'), mb=q('#peerChatMales'), ab=q('#peerChatAdmins');
+    if(!fb||!mb)return;
+    const me=await getPeerMe(myId); if(!me?.department){fb.innerHTML=mb.innerHTML='<div class="peer-empty">لم يتم تحديد الإدارة لهذا الحساب.</div>';return;}
+    let rows=[];
+    try{
+      const r=await db.from('workers').select('id,full_name,worker_code,department,gender,status,user_id').order('full_name',{ascending:true}).limit(5000);
+      if(r.error) throw r.error;
+      rows=r.data||[];
+    }catch(e){
+      rows=Array.isArray(window.workers)?window.workers.slice():[];
+    }
+    // دمج القائمة العامة إن كانت متاحة لضمان ظهور العامل الجديد فور تسجيله.
+    if(Array.isArray(window.workers)){
+      const map=new Map(rows.map(x=>[x.id,x])); window.workers.forEach(x=>{if(x?.id&&!map.has(x.id))map.set(x.id,x)}); rows=[...map.values()];
+    }
+    // تحديد النوع تلقائيًا من خانة النوع، وإذا كانت فارغة فمن الاسم، ثم حفظه للعامل الجديد.
+    const myGender=genderOf(me);
+    rows=rows.map(w=>{const inferred=genderOf(w); return inferred && !pg(w.gender)?({...w,gender:inferred}):w;});
+    if(!pg(me.gender) && myGender){ db.from('workers').update({gender:myGender==='female'?'أنثى':'ذكر'}).eq('id',myId).then(()=>{}).catch(()=>{}); me.gender=myGender; }
+    const updates=rows.filter(w=>w.id!==myId && !pg(w.gender) && genderOf(w)).slice(0,500).map(w=>db.from('workers').update({gender:genderOf(w)==='female'?'أنثى':'ذكر'}).eq('id',w.id));
+    if(updates.length) await Promise.allSettled(updates);
+    rows=rows.filter(w=>w.id!==myId && nt(w.department)===nt(me.department) && genderOf(w)===myGender);
+    window.peerDirectoryCache=rows; window.__finalPeerRows=rows;
+    const render=(arr,icon)=>arr.map(w=>`<button type="button" class="peer-person" onclick="selectPeerChat('${eh(w.id)}')"><span class="peer-avatar">${icon}</span><span class="peer-person-main"><b class="peer-person-name">${eh(w.full_name||'عامل')}</b><small class="peer-person-dept">${eh(w.department||me.department||'')}</small><em class="peer-available">🟢 متاح للدردشة</em></span></button>`).join('');
+    const g=pg(me.gender);
+    if(g==='female'){fb.innerHTML=render(rows,'👩')||'<div class="peer-empty">لا توجد عاملات أخريات في نفس الإدارة حتى الآن.</div>';mb.innerHTML='';}
+    else {mb.innerHTML=render(rows,'👨')||'<div class="peer-empty">لا يوجد عاملون آخرون في نفس الإدارة حتى الآن.</div>';fb.innerHTML='';}
+    if(ab){
+      const ar=await db.from('user_roles').select('user_id,role').eq('role','admin').limit(50);
+      ab.innerHTML=ar.error||!ar.data?.length?'<div class="peer-empty">لا توجد حسابات إدارة إضافية حاليًا.</div>':ar.data.map((a,i)=>`<button type="button" class="peer-admin-contact" data-admin-id="${eh(a.user_id)}" onclick="selectAdminChat('${eh(a.user_id)}','مسؤول الإدارة ${i+1}')"><span class="peer-avatar">🛡️</span><span><b>مسؤول الإدارة ${i+1}</b><small class="peer-admin-status">🟢 متاح</small></span></button>`).join('');
+    }
+  };
+  window.selectPeerChat=async function(otherId){
+    const myId=await getAuthWorkerIdentity(); if(!myId)return; const me=await getPeerMe(myId); let target=(window.peerDirectoryCache||[]).find(x=>String(x.id)===String(otherId));
+    if(!target){const r=await db.from('workers').select('id,full_name,worker_code,department,gender,status,user_id').eq('id',otherId).maybeSingle();target=r.data||null;}
+    if(!same(me,target)){alert('لا يمكنك التواصل إلا مع عامل من نفس الإدارة ونفس النوع.');return;}
+    q('#peerChatHeader').innerHTML=`<span class="peer-head-avatar">${pg(target.gender)==='female'?'👩':'👨'}</span><span><span class="peer-head-name">${eh(target.full_name)}</span><span class="peer-head-meta">${eh(target.department||'')} • متاح الآن</span></span>`;
+    q('#peerChatMessages').dataset.peer=otherId;q('#peerChatMessages').dataset.admin='';await refreshPeerChat();
+  };
+
+  // لوحة الأدمن: قرارات السلفة لا تظل ثابتة على "قيد المراجعة"؛ يمكن حفظ القرار مباشرة.
+  window.adminLoanRequests=async function(){
+    openCentralServiceModal('💰 طلبات السلف','<div class="card"><div id="fbAdminLoans">جارٍ تحميل طلبات السلف...</div></div>');
+    const box=q('#fbAdminLoans'); if(!box)return;
+    const r=await db.from('financial_requests').select('id,worker_id,amount,status,admin_notes,created_at,updated_at').eq('request_type','سلفة مالية').order('created_at',{ascending:false}).limit(100);
+    if(r.error){box.innerHTML='<p class="error">تعذر تحميل الطلبات: '+eh(r.error.message)+'</p>';return;}
+    let names=Array.isArray(window.workers)?window.workers:[];
+    const ids=(r.data||[]).map(x=>x.worker_id).filter(Boolean);
+    if(ids.length){const wr=await db.from('workers').select('id,full_name,worker_code,department').in('id',ids);if(!wr.error)names=[...names,...(wr.data||[])];}
+    const map=new Map(names.map(w=>[String(w.id),w]));
+    box.innerHTML=(r.data||[]).map(x=>{const w=map.get(String(x.worker_id));const st=x.status||'قيد المراجعة';return `<div class="shared-file" style="margin-bottom:12px"><b>${eh(w?.full_name||'عامل')}</b> — <b>${fmtMoney(x.amount)} جنيه</b><span class="req-status ${st==='مقبول'?'req-approved':st==='مرفوض'?'req-rejected':'req-pending'}">${eh(st)}</span><div class="meta">${x.created_at?new Date(x.created_at).toLocaleString('ar-EG'):''}</div><div class="formgrid" style="margin-top:10px"><select id="loanStatus_${eh(x.id)}"><option value="قيد المراجعة" ${st==='قيد المراجعة'?'selected':''}>قيد المراجعة</option><option value="مقبول" ${st==='مقبول'?'selected':''}>مقبول</option><option value="مرفوض" ${st==='مرفوض'?'selected':''}>مرفوض</option></select><input id="loanNote_${eh(x.id)}" value="${eh(x.admin_notes||'')}" placeholder="ملاحظة الإدارة (اختياري)"></div><button type="button" onclick="saveAdminLoanDecision('${eh(x.id)}')">💾 حفظ القرار</button></div>`}).join('')||'<p class="muted">لا توجد طلبات سلف.</p>';
+  };
+  window.saveAdminLoanDecision=async function(id){
+    const status=q('#loanStatus_'+id)?.value, admin_notes=q('#loanNote_'+id)?.value.trim()||''; if(!status)return;
+    const r=await db.from('financial_requests').update({status,admin_notes,updated_at:new Date().toISOString()}).eq('id',id);
+    if(r.error){alert('تعذر حفظ القرار: '+r.error.message);return;}
+    alert(status==='مقبول'?'تمت الموافقة على طلب السلفة.':status==='مرفوض'?'تم رفض طلب السلفة.':'تم حفظ الطلب كقيد المراجعة.');
+    await window.adminLoanRequests();
+  };
+})();
+</script>
