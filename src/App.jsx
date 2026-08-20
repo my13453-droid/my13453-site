@@ -17,12 +17,22 @@ const supabase = createClient(
 const PRESENT = ["present", "حضور", "حاضر"];
 const ABSENT = ["absent", "غياب", "غائب"];
 
+function normalizeAttendanceStatus(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
 function isPresent(value) {
-  return PRESENT.includes(String(value || "").toLowerCase());
+  return PRESENT.includes(
+    normalizeAttendanceStatus(value)
+  );
 }
 
 function isAbsent(value) {
-  return ABSENT.includes(String(value || "").toLowerCase());
+  return ABSENT.includes(
+    normalizeAttendanceStatus(value)
+  );
 }
 
 export default function App() {
@@ -182,201 +192,7 @@ export default function App() {
       isPresent(row.attendance_status)
   ).length;
 
-  const absentToday = attendance.filter(
-    (row) =>
-      row.attendance_date === today &&
-      isAbsent(row.attendance_status)
-  ).length;
-
-  const totalPresentDays = attendance.filter(
-    (row) => isPresent(row.attendance_status)
-  ).length;
-
-  if (loading) {
-    return (
-      <div style={styles.center}>
-        <h2>جارٍ تحميل المنظومة...</h2>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return (
-      <Login
-        email={email}
-        password={password}
-        setEmail={setEmail}
-        setPassword={setPassword}
-        login={login}
-        loading={loginLoading}
-        error={error}
-      />
-    );
-  }
-
-  return (
-    <div style={styles.page}>
-
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>
-            لوحة المتابعة المركزية
-          </h1>
-
-          <div style={styles.email}>
-            {session.user.email}
-          </div>
-        </div>
-
-        <button
-          onClick={logout}
-          style={styles.logout}
-        >
-          تسجيل الخروج
-        </button>
-      </header>
-
-      {error && (
-        <div style={styles.errorBox}>
-          {error}
-        </div>
-      )}
-
-      <div style={styles.statsGrid}>
-
-        <StatCard
-          title="إجمالي العمالة"
-          value={workers.length}
-        />
-
-        <StatCard
-          title="حضور اليوم"
-          value={presentToday}
-        />
-
-        <StatCard
-          title="غياب اليوم"
-          value={absentToday}
-        />
-
-        <StatCard
-          title="أيام الحضور المسجلة"
-          value={totalPresentDays}
-        />
-
-      </div>
-
-      <section style={styles.section}>
-
-        <div style={styles.sectionHeader}>
-          <h2>العاملين</h2>
-
-          <button
-            onClick={loadDashboard}
-            style={styles.refresh}
-          >
-            تحديث البيانات
-          </button>
-        </div>
-
-        {workers.length === 0 ? (
-          <div style={styles.empty}>
-            لا توجد بيانات عمالة ظاهرة.
-          </div>
-        ) : (
-          <div style={styles.workersGrid}>
-            {workers.map((worker) => {
-              const stats =
-                getWorkerStats(worker.id);
-
-              return (
-                <button
-                  key={worker.id}
-                  onClick={() =>
-                    selectWorker(worker)
-                  }
-                  style={styles.worker}
-                >
-                  <div style={styles.workerName}>
-                    {worker.full_name ||
-                      worker.name ||
-                      "بدون اسم"}
-                  </div>
-
-                  <div style={styles.workerCode}>
-                    كود العامل:{" "}
-                    {worker.worker_code || "-"}
-                  </div>
-
-                  <div style={styles.workerDays}>
-                    حضور: {stats.presentDays} يوم
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {selectedWorker && (
-        <section style={styles.details}>
-
-          <button
-            onClick={() =>
-              setSelectedWorker(null)
-            }
-            style={styles.close}
-          >
-            ×
-          </button>
-
-          <h2>
-            {selectedWorker.full_name ||
-              selectedWorker.name}
-          </h2>
-
-          <p>
-            كود العامل:{" "}
-            {selectedWorker.worker_code || "-"}
-          </p>
-
-          <div style={styles.workerStats}>
-
-            <StatCard
-              title="أيام الحضور"
-              value={
-                selectedWorker.presentDays
-              }
-            />
-
-            <StatCard
-              title="أيام الغياب"
-              value={
-                selectedWorker.absentDays
-              }
-            />
-
-            <StatCard
-              title="إجمالي الأيام المسجلة"
-              value={
-                selectedWorker.totalDays
-              }
-            />
-
-          </div>
-        </section>
-      )}
-
-    </div>
-  );
-}
-
-function Login({
-  email,
-  password,
-  setEmail,
-  setPassword,
-  login,
+  const absentToday =  login,
   loading,
   error,
 }) {
