@@ -909,7 +909,8 @@ async function uploadProfilePhoto(){
     const prepared=await resizeProfileImage(file);
     const {data:oldDocs}=await db.from("worker_documents").select("id,file_path").eq("worker_id",worker.id).eq("document_type","personal_photo");
     if(oldDocs?.length){const paths=oldDocs.map(x=>x.file_path).filter(Boolean);if(paths.length)await db.storage.from("worker-documents").remove(paths);await db.from("worker_documents").delete().in("id",oldDocs.map(x=>x.id));}
-    const path=`${user.id}/personal_photo/صورة_شخصية-${Date.now()}.jpg`;
+    const safePhotoName=`${Date.now()}-${(crypto.randomUUID?.()||Math.random().toString(36).slice(2))}.jpg`;
+    const path=`${user.id}/personal_photo/${safePhotoName}`;
     const {error:upErr}=await db.storage.from("worker-documents").upload(path,prepared,{contentType:"image/jpeg",upsert:false}); if(upErr)throw upErr;
     const {error:dbErr}=await db.from("worker_documents").insert({worker_id:worker.id,document_type:"personal_photo",file_path:path,file_name:"profile.jpg",mime_type:"image/jpeg",status:"pending"});
     if(dbErr){await db.storage.from("worker-documents").remove([path]);throw dbErr}
