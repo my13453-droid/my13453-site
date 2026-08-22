@@ -456,7 +456,7 @@ body{background:linear-gradient(135deg,#f8fdff,#eefcff 45%,#fff9ef)!important}
 </div>
 <button onclick="addWorker()">➕ إضافة عامل</button>
 <p id="addMsg"></p>
-<div class="scroll"><table><thead><tr><th>الكود</th><th>الاسم</th><th>الإدارة</th><th>القسم</th><th>الهاتف</th><th>البريد الإلكتروني</th><th>اليومية</th><th>تعديل</th><th>حذف</th></tr></thead><div id="adminLoadMsg" class="muted" style="margin:8px 0"></div><tbody id="workersBody"></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>الكود</th><th>الاسم</th><th>الإدارة</th><th>القسم</th><th>الهاتف</th><th>البريد الإلكتروني</th><th>اليومية</th><th>آخر ظهور</th><th>تعديل</th><th>حذف</th></tr></thead><div id="adminLoadMsg" class="muted" style="margin:8px 0"></div><tbody id="workersBody"></tbody></table></div>
 </div>
 </div>
 
@@ -647,7 +647,7 @@ async function login(){
 async function loadAdmin(){
  const msg=document.getElementById("adminLoadMsg");
  if(msg){msg.className="muted";msg.textContent="جارٍ تحميل بيانات العاملين...";}
- const {data,error}=await db.from("workers").select("id,worker_code,full_name,department,job_title,position,phone,email,daily_rate,user_id").order("worker_code");
+ const {data,error}=await db.from("workers").select("id,worker_code,full_name,department,job_title,position,phone,email,daily_rate,user_id,last_seen_at").order("worker_code");
  if(error){
    if(msg){msg.className="error";msg.textContent="تعذر تحميل البيانات: "+error.message;}
    return;
@@ -660,7 +660,7 @@ async function loadAdmin(){
 function renderWorkers(){
  const q=(document.getElementById("search")?.value||"").toLowerCase();
  const rows=workers.filter(w=>[(w.full_name||""),(w.worker_code||""),(w.phone||""),(w.email||"")].some(v=>v.toLowerCase().includes(q)));
- document.getElementById("workersBody").innerHTML=rows.length?rows.map(w=>`<tr><td>${esc(w.worker_code)}</td><td><button class="link-name" onclick="showWorkerDays('${esc(w.id)}')"><b>${esc(w.full_name)}</b></button></td><td>${esc(w.department||"")}</td><td>${esc(w.job_title||"")}</td><td>${esc(w.phone||"")}</td><td><b>${fmtMoney(w.daily_rate)}</b> جنيه</td><td><button class="small" onclick="editWorkerName('${esc(w.id)}','${esc(w.full_name||"")}')">✏️ تعديل الاسم</button> <button class="small" onclick="editWorkerSection('${esc(w.id)}','${esc(w.full_name||"")}','${esc(w.job_title||"")}')">🏢 تعديل القسم</button> <button class="small" onclick="editWorkerRate('${esc(w.id)}','${esc(w.full_name||"")}',${Number(w.daily_rate||0)})">💰 تعديل اليومية</button></td><td><button class="small danger" onclick="deleteWorker('${esc(w.id)}','${esc(w.full_name||"")}')">🗑️ حذف</button></td></tr>`).join(""):"<tr><td colspan='8'>لا توجد نتائج</td></tr>";
+ document.getElementById("workersBody").innerHTML=rows.length?rows.map(w=>`<tr><td>${esc(w.worker_code)}</td><td><button class="link-name" onclick="showWorkerDays('${esc(w.id)}')"><b>${esc(w.full_name)}</b></button></td><td>${esc(w.department||"")}</td><td>${esc(w.job_title||"")}</td><td>${esc(w.phone||"")}</td><td><b>${fmtMoney(w.daily_rate)}</b> جنيه</td><td>${w.last_seen_at?new Date(w.last_seen_at).toLocaleString("ar-EG",{dateStyle:"short",timeStyle:"short"}):"لم يدخل بعد"}</td><td><button class="small" onclick="editWorkerName('${esc(w.id)}','${esc(w.full_name||"")}')">✏️ تعديل الاسم</button> <button class="small" onclick="editWorkerSection('${esc(w.id)}','${esc(w.full_name||"")}','${esc(w.job_title||"")}')">🏢 تعديل القسم</button> <button class="small" onclick="editWorkerRate('${esc(w.id)}','${esc(w.full_name||"")}',${Number(w.daily_rate||0)})">💰 تعديل اليومية</button></td><td><button class="small danger" onclick="deleteWorker('${esc(w.id)}','${esc(w.full_name||"")}')">🗑️ حذف</button></td></tr>`).join(""):"<tr><td colspan='10'>لا توجد نتائج</td></tr>";
 }
 async function editWorkerName(id,currentName){
  const worker=workers.find(w=>w.id===id);
@@ -1091,6 +1091,14 @@ function toggleContactWa(){
   }
 }
 
+async function updateWorkerLastSeen(userId){
+  try{
+    await db.rpc("touch_worker_last_seen",{p_user_id:userId});
+  }catch(e){
+    console.warn("تعذر تحديث آخر ظهور للعامل:",e);
+  }
+}
+
 async function restoreAppSession(session){
   if(!session?.user)return false;
   if(restoringSession)return true;
@@ -1116,6 +1124,7 @@ async function restoreAppSession(session){
     }else{
       document.getElementById("dashboard").classList.add("hidden");
       document.getElementById("workerPage").classList.remove("hidden");
+      await updateWorkerLastSeen(session.user.id);
       await loadWorker();
     }
     // زر التواصل يظهر فقط بعد الدخول الناجح، ولا يظهر في شاشة تسجيل الدخول.
@@ -1780,231 +1789,16 @@ db.auth.onAuthStateChange((event,session)=>{
     q('#serviceModalBody').innerHTML=`<div class="card"><h3>📤 إضافة ملف للمكتبة</h3><div class="formgrid"><input id="fbSharedTitle" placeholder="عنوان المستند / النموذج"><input id="fbSharedCategory" placeholder="التصنيف"><input id="fbSharedFile" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"></div><textarea id="fbSharedDescription" rows="3" placeholder="وصف مختصر"></textarea><button onclick="fbUploadLibrary()">⬆️ نشر للجميع</button><p id="fbSharedMsg"></p></div><div class="card"><h3>📋 الملفات المنشورة</h3><div id="fbSharedList">جارٍ التحميل...</div></div>`;
     refreshFbAdminLibrary();
   }
-  window.fbUploadLibrary = async function(){
-
-  const title =
-    document.getElementById('fbSharedTitle')?.value.trim();
-
-  const category =
-    document.getElementById('fbSharedCategory')?.value.trim() || 'عام';
-
-  const description =
-    document.getElementById('fbSharedDescription')?.value.trim() || '';
-
-  const file =
-    document.getElementById('fbSharedFile')?.files?.[0];
-
-  const msg =
-    document.getElementById('fbSharedMsg');
-
-  /* =========================
-     التحقق من البيانات
-  ========================= */
-
-  if(!title || !file){
-    msg.className = 'error';
-    msg.textContent = 'اكتب عنوان الملف واختر الملف أولًا.';
-    return;
-  }
-
-  if(file.size > 20 * 1024 * 1024){
-    msg.className = 'error';
-    msg.textContent = 'حجم الملف لا يتجاوز 20 ميجابايت.';
-    return;
-  }
-
-  /* =========================
-     التأكد من تسجيل دخول الأدمن
-  ========================= */
-
-  const {
-    data: { user }
-  } = await db.auth.getUser();
-
-  if(!user){
-    msg.className = 'error';
-    msg.textContent = 'يجب تسجيل الدخول أولًا.';
-    return;
-  }
-
-  try{
-
-    msg.className = 'muted';
-    msg.textContent = 'جارٍ رفع الملف...';
-
-    /* =========================
-       تجهيز اسم ومسار الملف
-    ========================= */
-
-    const safeName =
-      (file.name || 'file')
-      .replace(/[^a-zA-Z0-9._-]/g,'_');
-
-    const path =
-      'shared/' + Date.now() + '-' + safeName;
-
-    /* =========================
-       رفع الملف إلى Storage
-    ========================= */
-
-    const up = await db
-      .storage
-      .from('worker-documents')
-      .upload(
-        path,
-        file,
-        {
-          contentType:
-            file.type ||
-            'application/octet-stream',
-          upsert:false
-        }
-      );
-
-    if(up.error){
-      throw up.error;
-    }
-
-    /* =========================
-       تسجيل الملف في المكتبة
-    ========================= */
-
-    const r = await db
-      .from('worker_library_files')
-      .insert({
-        file_path:path,
-        file_name:file.name,
-        mime_type:file.type || null,
-        size_bytes:file.size,
-        uploaded_by:user.id,
-        title:title,
-        description:description,
-        category:category,
-        is_published:true
-      });
-
-    if(r.error){
-
-      /* لو التسجيل فشل نحذف الملف من Storage */
-      await db
-        .storage
-        .from('worker-documents')
-        .remove([path]);
-
-      throw r.error;
-    }
-
-    /* =========================
-       جلب جميع العاملين
-    ========================= */
-
-    msg.className = 'muted';
-    msg.textContent = 'تم رفع الملف، جارٍ إرسال الإشعارات...';
-
-    const workersResult = await db
-      .from('workers')
-      .select('id');
-
-    if(workersResult.error){
-      throw workersResult.error;
-    }
-
-    const workerRows = workersResult.data || [];
-
-    /* =========================
-       إنشاء إشعار لكل عامل
-    ========================= */
-
-    if(workerRows.length){
-
-      const notificationRows =
-        workerRows.map(worker => ({
-          recipient_worker_id: worker.id,
-
-          message:
-            '📚 ملف جديد في مكتبة العاملين\n' +
-            'تم رفع ملف جديد: ' +
-            title +
-            '\n' +
-            'يمكنك فتحه الآن من مكتبة العاملين.'
-        }));
-
-      const notificationResult = await db
-        .from('notifications')
-        .insert(notificationRows);
-
-      if(notificationResult.error){
-
-        /*
-         * الملف نفسه تم رفعه ونشره بالفعل،
-         * لذلك لا نحذفه إذا فشل الإشعار.
-         */
-        console.error(
-          'تعذر إرسال إشعارات المكتبة:',
-          notificationResult.error
-        );
-
-        msg.className = 'success';
-
-        msg.textContent =
-          'تم نشر الملف بنجاح، لكن تعذر إرسال الإشعارات للعاملين.';
-
-        return;
-      }
-    }
-
-    /* =========================
-       نجاح العملية بالكامل
-    ========================= */
-
-    msg.className = 'success';
-
-    msg.textContent =
-      '✅ تم نشر الملف بنجاح وإرسال إشعار لجميع العاملين.';
-
-    /* تنظيف الحقول */
-
-    const titleInput =
-      document.getElementById('fbSharedTitle');
-
-    const descriptionInput =
-      document.getElementById('fbSharedDescription');
-
-    const fileInput =
-      document.getElementById('fbSharedFile');
-
-    if(titleInput){
-      titleInput.value = '';
-    }
-
-    if(descriptionInput){
-      descriptionInput.value = '';
-    }
-
-    if(fileInput){
-      fileInput.value = '';
-    }
-
-    /* تحديث قائمة الملفات عند الأدمن */
-
-    if(typeof refreshFbAdminLibrary === 'function'){
-      refreshFbAdminLibrary();
-    }
-
-  }catch(error){
-
-    console.error(
-      'خطأ أثناء نشر ملف المكتبة:',
-      error
-    );
-
-    msg.className = 'error';
-
-    msg.textContent =
-      'تعذر رفع الملف: ' +
-      (error?.message || error);
-  }
-};
+  window.fbUploadLibrary=async function(){
+    const title=q('#fbSharedTitle')?.value.trim(),category=q('#fbSharedCategory')?.value.trim()||'عام',description=q('#fbSharedDescription')?.value.trim()||'',file=q('#fbSharedFile')?.files?.[0],msg=q('#fbSharedMsg');
+    if(!title||!file){msg.className='error';msg.textContent='اكتب العنوان واختر الملف.';return}if(file.size>20*1024*1024){msg.className='error';msg.textContent='حجم الملف لا يتجاوز 20 ميجابايت.';return}
+    const {data:{user}}=await db.auth.getUser();if(!user){msg.className='error';msg.textContent='يجب تسجيل الدخول أولًا.';return}
+    const safe=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_'),path='shared/'+Date.now()+'-'+safe;msg.className='muted';msg.textContent='جارٍ الرفع...';
+    const up=await db.storage.from('worker-documents').upload(path,file,{contentType:file.type||'application/octet-stream',upsert:false});if(up.error){msg.className='error';msg.textContent='تعذر رفع الملف: '+up.error.message;return}
+    const r=await db.from('worker_library_files').insert({file_path:path,file_name:file.name,mime_type:file.type||null,size_bytes:file.size,uploaded_by:user.id,title,description,category,is_published:true});
+    if(r.error){await db.storage.from('worker-documents').remove([path]);msg.className='error';msg.textContent='تعذر تسجيل الملف: '+r.error.message;return}
+    msg.className='success';msg.textContent='تم نشر الملف لجميع العاملين.';q('#fbSharedTitle').value='';q('#fbSharedDescription').value='';q('#fbSharedFile').value='';refreshFbAdminLibrary();
+  };
   window.refreshFbAdminLibrary=async function(){
     const b=q('#fbSharedList');if(!b)return;const r=await db.from('worker_library_files').select('id,file_path,file_name,title,description,category,is_published,created_at').order('created_at',{ascending:false});
     if(r.error){b.innerHTML=`<p class="error">${escHtml(r.error.message)}</p>`;return}
