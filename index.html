@@ -1780,16 +1780,231 @@ db.auth.onAuthStateChange((event,session)=>{
     q('#serviceModalBody').innerHTML=`<div class="card"><h3>📤 إضافة ملف للمكتبة</h3><div class="formgrid"><input id="fbSharedTitle" placeholder="عنوان المستند / النموذج"><input id="fbSharedCategory" placeholder="التصنيف"><input id="fbSharedFile" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"></div><textarea id="fbSharedDescription" rows="3" placeholder="وصف مختصر"></textarea><button onclick="fbUploadLibrary()">⬆️ نشر للجميع</button><p id="fbSharedMsg"></p></div><div class="card"><h3>📋 الملفات المنشورة</h3><div id="fbSharedList">جارٍ التحميل...</div></div>`;
     refreshFbAdminLibrary();
   }
-  window.fbUploadLibrary=async function(){
-    const title=q('#fbSharedTitle')?.value.trim(),category=q('#fbSharedCategory')?.value.trim()||'عام',description=q('#fbSharedDescription')?.value.trim()||'',file=q('#fbSharedFile')?.files?.[0],msg=q('#fbSharedMsg');
-    if(!title||!file){msg.className='error';msg.textContent='اكتب العنوان واختر الملف.';return}if(file.size>20*1024*1024){msg.className='error';msg.textContent='حجم الملف لا يتجاوز 20 ميجابايت.';return}
-    const {data:{user}}=await db.auth.getUser();if(!user){msg.className='error';msg.textContent='يجب تسجيل الدخول أولًا.';return}
-    const safe=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_'),path='shared/'+Date.now()+'-'+safe;msg.className='muted';msg.textContent='جارٍ الرفع...';
-    const up=await db.storage.from('worker-documents').upload(path,file,{contentType:file.type||'application/octet-stream',upsert:false});if(up.error){msg.className='error';msg.textContent='تعذر رفع الملف: '+up.error.message;return}
-    const r=await db.from('worker_library_files').insert({file_path:path,file_name:file.name,mime_type:file.type||null,size_bytes:file.size,uploaded_by:user.id,title,description,category,is_published:true});
-    if(r.error){await db.storage.from('worker-documents').remove([path]);msg.className='error';msg.textContent='تعذر تسجيل الملف: '+r.error.message;return}
-    msg.className='success';msg.textContent='تم نشر الملف لجميع العاملين.';q('#fbSharedTitle').value='';q('#fbSharedDescription').value='';q('#fbSharedFile').value='';refreshFbAdminLibrary();
-  };
+  window.fbUploadLibrary = async function(){
+
+  const title =
+    document.getElementById('fbSharedTitle')?.value.trim();
+
+  const category =
+    document.getElementById('fbSharedCategory')?.value.trim() || 'عام';
+
+  const description =
+    document.getElementById('fbSharedDescription')?.value.trim() || '';
+
+  const file =
+    document.getElementById('fbSharedFile')?.files?.[0];
+
+  const msg =
+    document.getElementById('fbSharedMsg');
+
+  /* =========================
+     التحقق من البيانات
+  ========================= */
+
+  if(!title || !file){
+    msg.className = 'error';
+    msg.textContent = 'اكتب عنوان الملف واختر الملف أولًا.';
+    return;
+  }
+
+  if(file.size > 20 * 1024 * 1024){
+    msg.className = 'error';
+    msg.textContent = 'حجم الملف لا يتجاوز 20 ميجابايت.';
+    return;
+  }
+
+  /* =========================
+     التأكد من تسجيل دخول الأدمن
+  ========================= */
+
+  const {
+    data: { user }
+  } = await db.auth.getUser();
+
+  if(!user){
+    msg.className = 'error';
+    msg.textContent = 'يجب تسجيل الدخول أولًا.';
+    return;
+  }
+
+  try{
+
+    msg.className = 'muted';
+    msg.textContent = 'جارٍ رفع الملف...';
+
+    /* =========================
+       تجهيز اسم ومسار الملف
+    ========================= */
+
+    const safeName =
+      (file.name || 'file')
+      .replace(/[^a-zA-Z0-9._-]/g,'_');
+
+    const path =
+      'shared/' + Date.now() + '-' + safeName;
+
+    /* =========================
+       رفع الملف إلى Storage
+    ========================= */
+
+    const up = await db
+      .storage
+      .from('worker-documents')
+      .upload(
+        path,
+        file,
+        {
+          contentType:
+            file.type ||
+            'application/octet-stream',
+          upsert:false
+        }
+      );
+
+    if(up.error){
+      throw up.error;
+    }
+
+    /* =========================
+       تسجيل الملف في المكتبة
+    ========================= */
+
+    const r = await db
+      .from('worker_library_files')
+      .insert({
+        file_path:path,
+        file_name:file.name,
+        mime_type:file.type || null,
+        size_bytes:file.size,
+        uploaded_by:user.id,
+        title:title,
+        description:description,
+        category:category,
+        is_published:true
+      });
+
+    if(r.error){
+
+      /* لو التسجيل فشل نحذف الملف من Storage */
+      await db
+        .storage
+        .from('worker-documents')
+        .remove([path]);
+
+      throw r.error;
+    }
+
+    /* =========================
+       جلب جميع العاملين
+    ========================= */
+
+    msg.className = 'muted';
+    msg.textContent = 'تم رفع الملف، جارٍ إرسال الإشعارات...';
+
+    const workersResult = await db
+      .from('workers')
+      .select('id');
+
+    if(workersResult.error){
+      throw workersResult.error;
+    }
+
+    const workerRows = workersResult.data || [];
+
+    /* =========================
+       إنشاء إشعار لكل عامل
+    ========================= */
+
+    if(workerRows.length){
+
+      const notificationRows =
+        workerRows.map(worker => ({
+          recipient_worker_id: worker.id,
+
+          message:
+            '📚 ملف جديد في مكتبة العاملين\n' +
+            'تم رفع ملف جديد: ' +
+            title +
+            '\n' +
+            'يمكنك فتحه الآن من مكتبة العاملين.'
+        }));
+
+      const notificationResult = await db
+        .from('notifications')
+        .insert(notificationRows);
+
+      if(notificationResult.error){
+
+        /*
+         * الملف نفسه تم رفعه ونشره بالفعل،
+         * لذلك لا نحذفه إذا فشل الإشعار.
+         */
+        console.error(
+          'تعذر إرسال إشعارات المكتبة:',
+          notificationResult.error
+        );
+
+        msg.className = 'success';
+
+        msg.textContent =
+          'تم نشر الملف بنجاح، لكن تعذر إرسال الإشعارات للعاملين.';
+
+        return;
+      }
+    }
+
+    /* =========================
+       نجاح العملية بالكامل
+    ========================= */
+
+    msg.className = 'success';
+
+    msg.textContent =
+      '✅ تم نشر الملف بنجاح وإرسال إشعار لجميع العاملين.';
+
+    /* تنظيف الحقول */
+
+    const titleInput =
+      document.getElementById('fbSharedTitle');
+
+    const descriptionInput =
+      document.getElementById('fbSharedDescription');
+
+    const fileInput =
+      document.getElementById('fbSharedFile');
+
+    if(titleInput){
+      titleInput.value = '';
+    }
+
+    if(descriptionInput){
+      descriptionInput.value = '';
+    }
+
+    if(fileInput){
+      fileInput.value = '';
+    }
+
+    /* تحديث قائمة الملفات عند الأدمن */
+
+    if(typeof refreshFbAdminLibrary === 'function'){
+      refreshFbAdminLibrary();
+    }
+
+  }catch(error){
+
+    console.error(
+      'خطأ أثناء نشر ملف المكتبة:',
+      error
+    );
+
+    msg.className = 'error';
+
+    msg.textContent =
+      'تعذر رفع الملف: ' +
+      (error?.message || error);
+  }
+};
   window.refreshFbAdminLibrary=async function(){
     const b=q('#fbSharedList');if(!b)return;const r=await db.from('worker_library_files').select('id,file_path,file_name,title,description,category,is_published,created_at').order('created_at',{ascending:false});
     if(r.error){b.innerHTML=`<p class="error">${escHtml(r.error.message)}</p>`;return}
