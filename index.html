@@ -3555,25 +3555,260 @@ body.fb-auth-mode #fbWorkerBar #fbWorkerName{white-space:nowrap;overflow:hidden;
     openModal('📝 طلبات العامل الإلكترونية',`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><h3 style="margin:0">📋 إدارة طلبات العامل</h3><p class="muted">استلام الطلبات، مراجعتها، ثم تنفيذها أو رفضها مع تسجيل الرد.</p></div><button onclick="window.adminWorkerRequests()">🔄 تحديث</button></div><div id="awrList" style="margin-top:12px">جارٍ التحميل...</div></div>`);
     await window.adminWorkerRequests();
   }
-  window.adminWorkerRequests=async function(){
-    const box=q('#awrList');if(!box)return;
-    const r=await db.from('worker_requests').select('id,request_no,worker_id,request_type,details,status,admin_notes,created_at,updated_at,workers(full_name,worker_code,department)').order('created_at',{ascending:false}).limit(200);
-    if(r.error){box.innerHTML=`<p class="error">تعذر تحميل الطلبات: ${e(r.error.message)}</p>`;return;}
-    const rows=r.data||[];if(!rows.length){box.innerHTML='<div class="request-empty">لا توجد طلبات عامل حتى الآن.</div>';return;}
-    box.innerHTML=rows.map(x=>`<div class="worker-request-card"><div class="worker-request-head"><div><div class="worker-request-no">${e(x.request_no)}</div><div><b>${e(x.workers?.full_name||'عامل')}</b> — ${e(x.workers?.worker_code||'')} — ${e(x.request_type)}</div><div class="worker-request-meta">${e(x.workers?.department||'')} • ${date(x.created_at)}</div></div><span class="request-status ${statusClass(x.status)}">${statusIcon(x.status)} ${e(x.status)}</span></div><div style="margin-top:10px;padding:10px;background:#f8fafc;border-radius:12px;white-space:pre-wrap">${e(x.details)}</div>${timeline(x.status)}<div class="request-admin-actions"><select id="awr-st-${e(x.id)}">${statuses.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select><input id="awr-note-${e(x.id)}" value="${e(x.admin_notes||'')}" placeholder="ملاحظة / رد للعامل" style="flex:1;min-width:180px"><button onclick="window.updateWorkerRequest('${e(x.id)}')">💾 حفظ الحالة والرد</button></div></div>`).join('');
-  };
-  window.updateWorkerRequest=async function(id){
-    const status=q('#awr-st-'+id)?.value,note=q('#awr-note-'+id)?.value.trim();
-    const r=await db.from('worker_requests').update({status,admin_notes:note||null}).eq('id',id);
-    if(r.error){alert('تعذر تحديث الطلب: '+r.error.message);return;}
+
+window.adminWorkerRequests = async function () {
+    const box = q('#awrList');
+
+    if (!box) {
+        console.error('عنصر #awrList غير موجود في صفحة إدارة الطلبات');
+        return;
+    }
+
+    box.innerHTML = `
+        <div style="padding:20px;text-align:center">
+            ⏳ جاري تحميل طلبات العاملين...
+        </div>
+    `;
+
+    const r = await db
+        .from('worker_requests')
+        .select(`
+            id,
+            request_no,
+            worker_id,
+            worker_user_id,
+            request_type,
+            details,
+            status,
+            admin_notes,
+            created_at,
+            updated_at,
+            workers (
+                full_name,
+                worker_code,
+                department
+            )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+    if (r.error) {
+        console.error('worker_requests error:', r.error);
+
+        box.innerHTML = `
+            <div class="error" style="padding:15px">
+                تعذر تحميل الطلبات:<br>
+                ${e(r.error.message)}
+            </div>
+        `;
+
+        return;
+    }
+
+    const rows = r.data || [];
+
+    if (!rows.length) {
+        box.innerHTML = `
+            <div class="request-empty">
+                📝 لا توجد طلبات عامل حتى الآن.
+            </div>
+        `;
+        return;
+    }
+
+    box.innerHTML = rows.map(x => {
+
+        const workerName =
+            x.workers?.full_name || 'عامل';
+
+        const workerCode =
+            x.workers?.worker_code || '';
+
+        const department =
+            x.workers?.department || '';
+
+        const requestNo =
+            x.request_no || x.id;
+
+        const requestType =
+            x.request_type || 'طلب';
+
+        const details =
+            x.details || '';
+
+        const status =
+            x.status || 'تم الاستلام';
+
+        const notes =
+            x.admin_notes || '';
+
+        return `
+            <div class="worker-request-card">
+
+                <div class="worker-request-head">
+
+                    <div>
+
+                        <div class="worker-request-no">
+                            رقم المتابعة: ${e(requestNo)}
+                        </div>
+
+                        <div style="margin-top:5px">
+                            <b>${e(workerName)}</b>
+                            ${workerCode ? ` — ${e(workerCode)}` : ''}
+                            ${requestType ? ` — ${e(requestType)}` : ''}
+                        </div>
+
+                        <div class="worker-request-meta">
+                            ${e(department)}
+                            ${department ? ' • ' : ''}
+                            ${date(x.created_at)}
+                        </div>
+
+                    </div>
+
+                    <span class="request-status ${statusClass(status)}">
+                        ${statusIcon(status)}
+                        ${e(status)}
+                    </span>
+
+                </div>
+
+                <div style="
+                    margin-top:10px;
+                    padding:12px;
+                    background:#f8fafc;
+                    border-radius:12px;
+                    white-space:pre-wrap;
+                ">
+                    ${e(details)}
+                </div>
+
+                ${typeof timeline === 'function'
+                    ? timeline(status)
+                    : ''
+                }
+
+                <div class="request-admin-actions">
+
+                    <select id="awr-st-${e(x.id)}">
+                        ${statuses.map(s => `
+                            <option
+                                value="${e(s)}"
+                                ${s === status ? 'selected' : ''}
+                            >
+                                ${e(s)}
+                            </option>
+                        `).join('')}
+                    </select>
+
+                    <input
+                        id="awr-note-${e(x.id)}"
+                        value="${e(notes)}"
+                        placeholder="ملاحظة / رد للعامل"
+                        style="flex:1;min-width:180px"
+                    >
+
+                    <button
+                        type="button"
+                        onclick="window.updateWorkerRequest('${e(x.id)}')"
+                    >
+                        💾 حفظ الحالة والرد
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+    }).join('');
+};
+
+
+window.updateWorkerRequest = async function (id) {
+
+    const status =
+        q('#awr-st-' + id)?.value;
+
+    const note =
+        q('#awr-note-' + id)?.value.trim();
+
+    if (!status) {
+        alert('اختر حالة الطلب أولًا');
+        return;
+    }
+
+    const r = await db
+        .from('worker_requests')
+        .update({
+            status: status,
+            admin_notes: note || null,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+    if (r.error) {
+
+        console.error('update worker request error:', r.error);
+
+        alert(
+            'تعذر تحديث الطلب:\n' +
+            r.error.message
+        );
+
+        return;
+    }
+
     await window.adminWorkerRequests();
-  };
-  window.openWorkerRequests=async function(){const box=q('#workerServiceArea');if(!box)return;await renderWorkerRequests(box);box.scrollIntoView({behavior:'smooth',block:'start'});};
+};
 
-  // Override only the requests service; all other existing services remain untouched.
-  const prev=window.openWorkerService;
-  window.openWorkerService=async function(kind){if(kind==='requests')return window.openWorkerRequests();return prev?prev(kind):null;};
 
+window.openWorkerRequests = async function () {
+
+    const box =
+        q('#workerServiceArea');
+
+    if (!box) {
+        console.error(
+            'عنصر #workerServiceArea غير موجود'
+        );
+        return;
+    }
+
+    await renderWorkerRequests(box);
+
+    box.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+    });
+};
+
+
+/*
+ * فتح خدمة طلبات العامل
+ * بدون التأثير على أي خدمة أخرى
+ */
+const previousOpenWorkerService =
+    window.openWorkerService;
+
+window.openWorkerService = async function (kind) {
+
+    if (kind === 'requests') {
+
+        /*
+         * لو المستخدم عامل
+         */
+        return window.openWorkerRequests();
+
+    }
+
+    /*
+     * باقي الخدمات تظل كما هي
+     */
+    return previousOpenWorkerService
+        ? previousOpenWorkerService(kind)
+        : null;
+};
   function injectAdminCard(){
     const grid=document.querySelector('#centralAdminServices .service-grid');
     if(!grid||grid.querySelector('.worker-requests-admin-service'))return;
