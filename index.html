@@ -366,10 +366,73 @@ body{background:linear-gradient(135deg,#f8fdff,#eefcff 45%,#fff9ef)!important}
 .peer-direct-compose textarea{border-radius:16px!important}
 @media(max-width:700px){.peer-direct-messages{min-height:360px;max-height:52vh!important}}
 </style>
+
+<style id="luxury-colors-only">
+:root{--lux-navy:#081426;--lux-navy2:#102744;--lux-gold:#d4af37;--lux-gold2:#f2d675;--lux-bg:#f4f1e8;--lux-ink:#172337;--lux-card:#fffdf8}
+body{background:radial-gradient(circle at top,#fffdf6 0%,#f3f0e7 55%,#e8edf2 100%)!important;color:var(--lux-ink)!important}
+header,.fb-topbar{background:linear-gradient(135deg,#050d19 0%,#0b1b31 52%,#173455 100%)!important;border-bottom:2px solid var(--lux-gold)!important}
+.brand-header,.login-brand,.dashboard-text-brand{background:linear-gradient(145deg,#fffdf8,#f5f0e3)!important;border-color:var(--lux-gold)!important}
+.text-brand .company,.company-name{color:#091a31!important}
+.text-brand .workers{background:linear-gradient(90deg,#8c6a12,#d4af37,#8c6a12)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important}
+.text-brand .rule,.company-name::after{background:linear-gradient(90deg,transparent,#9d7718,#f0d36d,#9d7718,transparent)!important}
+.card,.profile-card,.notification-card,.shared-file,.peer-direct-chat,.fb-dropdown{background:rgba(255,253,248,.97)!important;border-color:rgba(157,119,24,.18)!important;box-shadow:0 10px 30px rgba(8,20,38,.10)!important}
+button{background:linear-gradient(135deg,#0a1a30,#173a60)!important;color:#fff!important;border:1px solid rgba(212,175,55,.55)!important;box-shadow:0 5px 14px rgba(8,20,38,.16)!important}
+button:hover{background:linear-gradient(135deg,#173a60,#0a1a30)!important}
+.secondary{background:linear-gradient(135deg,#5f6874,#303946)!important}.danger{background:linear-gradient(135deg,#8e2936,#5d1621)!important}
+th,.month-table th,.salary-days th{background:linear-gradient(135deg,#0a1a30,#173a60)!important;color:#fff!important}
+input,select,textarea{background:#fffdf8!important;border-color:#d9cfad!important;color:#172337!important}
+.stat{background:linear-gradient(145deg,#fffdf8,#f2ead5)!important;border:1px solid rgba(212,175,55,.28)!important}
+.fb-live-clock{background:linear-gradient(135deg,#d4af37,#f2d675)!important;color:#081426!important;border:1px solid #9d7718!important}
+.fb-icon-btn{background:rgba(255,255,255,.10)!important;border:1px solid rgba(212,175,55,.35)!important;box-shadow:none!important}
+</style>
+
+<style id="final-visual-luxury-v2">
+:root{
+ --v2-bg:#eef2ff;--v2-surface:#ffffff;--v2-ink:#111827;--v2-muted:#64748b;
+ --v2-navy:#111827;--v2-purple:#312e81;--v2-indigo:#4f46e5;--v2-cyan:#0891b2;
+ --v2-line:#dbe3f0;--v2-soft:#f5f7ff;--v2-glow:rgba(79,70,229,.18);
+}
+body{background:radial-gradient(circle at 15% 0%,#ffffff 0,#eef2ff 42%,#e9eef7 100%)!important;color:var(--v2-ink)!important}
+header.brand-header{background:linear-gradient(135deg,#0b1020,#171b38 55%,#25205a)!important;border-bottom:0!important;box-shadow:0 12px 34px rgba(17,24,39,.20)!important}
+.text-brand .company,.company-name{color:#fff!important;text-shadow:0 2px 18px rgba(79,70,229,.35)!important}
+.text-brand .workers{background:linear-gradient(90deg,#c7d2fe,#ffffff,#a5f3fc)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important}
+.text-brand .rule,.company-name::after{background:linear-gradient(90deg,transparent,#a5b4fc,#67e8f9,#a5b4fc,transparent)!important}
+.dashboard-text-brand,.login-brand{background:linear-gradient(145deg,#111827,#1e293b)!important;border:1px solid rgba(165,180,252,.35)!important;color:#fff!important}
+.card,.profile-card,.notification-card,.shared-file,.peer-direct-chat,.fb-dropdown{background:rgba(255,255,255,.96)!important;border:1px solid var(--v2-line)!important;box-shadow:0 14px 38px rgba(30,41,59,.10)!important;border-radius:22px!important}
+button{background:linear-gradient(135deg,#312e81,#4f46e5)!important;color:#fff!important;border:1px solid rgba(129,140,248,.55)!important;border-radius:14px!important;box-shadow:0 8px 20px rgba(49,46,129,.18)!important}
+button:hover{background:linear-gradient(135deg,#4338ca,#6366f1)!important;transform:translateY(-1px)}
+input,select,textarea{background:#fff!important;border:1px solid #cfd8e6!important;color:#111827!important;border-radius:14px!important}
+.stat{background:linear-gradient(145deg,#fff,#f5f7ff)!important;border:1px solid #dbe3f0!important;border-radius:18px!important}
+.fb-topbar{background:rgba(255,255,255,.92)!important;border:1px solid #d8e0ee!important;box-shadow:0 10px 28px rgba(30,41,59,.10)!important;border-radius:18px!important;backdrop-filter:blur(14px)}
+.fb-user-mini{color:#172554!important}.fb-icon-btn{background:linear-gradient(145deg,#eef2ff,#e0e7ff)!important;color:#312e81!important;border:1px solid #c7d2fe!important}
+.fb-live-clock{background:linear-gradient(135deg,#111827,#312e81)!important;color:#fff!important;border:1px solid #6366f1!important;box-shadow:0 10px 24px rgba(49,46,129,.25)!important}
+.fb-worker-clock-wrap{display:flex;justify-content:center;align-items:center;margin:10px 0 14px;position:relative;z-index:20}
+.fb-worker-clock{min-width:210px;justify-content:center;padding:11px 18px!important;border-radius:16px!important;font-size:15px!important;letter-spacing:.2px!important}
+#workerPage{padding-top:0!important}
+#workerServices .service-card,#centralAdminServices .service-card{background:linear-gradient(145deg,#ffffff,#f7f8ff)!important;border:1px solid #dbe3f0!important;border-radius:22px!important;box-shadow:0 12px 30px rgba(49,46,129,.09)!important;overflow:hidden;position:relative}
+#workerServices .service-card:before,#centralAdminServices .service-card:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,#312e81,#4f46e5,#0891b2);opacity:.9}
+.service-icon{width:58px!important;height:58px!important;border-radius:18px!important;display:grid!important;place-items:center!important;font-size:30px!important;background:linear-gradient(145deg,#eef2ff,#e0e7ff)!important;border:1px solid #c7d2fe!important;box-shadow:inset 0 1px 0 #fff,0 8px 18px rgba(49,46,129,.12)!important}
+#workerServices .service-card h3,#centralAdminServices .service-card h3{color:#1e1b4b!important}
+.docs-v8-head{background:linear-gradient(135deg,#111827,#312e81)!important;color:#fff!important;border-radius:20px!important;padding:18px!important;margin-bottom:14px!important}
+.docs-v8-head p{color:#dbeafe!important}
+.docs-private-badge{background:rgba(255,255,255,.13)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;border-radius:999px!important}
+.docs-folder-grid{gap:16px!important}
+.docs-folder-card{position:relative!important;background:linear-gradient(145deg,#fff,#f5f7ff)!important;border:1px solid #d6def0!important;border-radius:20px 20px 18px 18px!important;padding:18px!important;box-shadow:0 12px 26px rgba(49,46,129,.09)!important;transition:.18s ease!important;overflow:hidden!important}
+.docs-folder-card:before{content:"";position:absolute;top:0;right:0;width:42%;height:7px;border-radius:0 0 0 14px;background:linear-gradient(90deg,#312e81,#6366f1,#22d3ee)!important}
+.docs-folder-card:hover{transform:translateY(-3px)!important;box-shadow:0 18px 34px rgba(49,46,129,.14)!important}
+.docs-folder-icon{width:64px!important;height:52px!important;display:grid!important;place-items:center!important;font-size:30px!important;background:linear-gradient(145deg,#e0e7ff,#cffafe)!important;border-radius:14px 14px 12px 12px!important;border:1px solid #c7d2fe!important;box-shadow:0 8px 18px rgba(49,46,129,.12)!important;margin-bottom:12px!important}
+.docs-folder-title{color:#172554!important;font-weight:900!important}.docs-folder-status{color:#64748b!important}
+.profile-kicker{background:linear-gradient(135deg,#e0e7ff,#cffafe)!important;color:#312e81!important;border:1px solid #c7d2fe!important}
+.profile-photo,.profile-photo-placeholder{border-color:#6366f1!important;box-shadow:0 16px 36px rgba(49,46,129,.18)!important}
+.notification-card{border-right:5px solid #4f46e5!important}
+th,.month-table th,.salary-days th{background:linear-gradient(135deg,#111827,#312e81)!important;color:#fff!important}
+.fb-dropdown{border-color:#d8e0ee!important}.fb-drop-head{background:linear-gradient(135deg,#f5f7ff,#eef2ff)!important;color:#1e1b4b!important}
+@media(max-width:650px){.fb-worker-clock{min-width:190px;font-size:14px!important}.docs-folder-grid{grid-template-columns:1fr!important}.service-icon{width:52px!important;height:52px!important}}
+</style>
 </head>
 <body>
 <header class="brand-header"><div class="brand-wrap">
-<div class="text-brand"><div class="company">شركة مصر للطيران للخدمات الجوية</div><div class="workers">العمالة المعاونة</div><div class="rule"></div></div>
+<div class="text-brand"><div class="company">شركة مصر للطيران للخدمات الجوية</div><div class="workers">المتابعة المركزية - العمالة المعاونة</div><div class="rule"></div></div>
 </div></header>
 
 <div id="contactWhatsapp" class="contact-whatsapp" aria-label="للتواصل والاستفسار">
@@ -388,7 +451,7 @@ body{background:linear-gradient(135deg,#f8fdff,#eefcff 45%,#fff9ef)!important}
 <main>
 
 <section id="login" class="card">
-<div class="text-brand login-brand"><div class="company">شركة مصر للطيران للخدمات الجوية</div><div class="workers">العمالة المعاونة</div><div class="rule"></div></div>
+<div class="text-brand login-brand"><div class="company">شركة مصر للطيران للخدمات الجوية</div><div class="workers">المتابعة المركزية - العمالة المعاونة</div><div class="rule"></div></div>
 <h2>🔐 تسجيل الدخول</h2>
 <input id="email" type="text" placeholder="📧 البريد الإلكتروني أو 📱 رقم الهاتف">
 <input id="password" type="password" placeholder="🔐 كلمة المرور">
@@ -421,7 +484,7 @@ body{background:linear-gradient(135deg,#f8fdff,#eefcff 45%,#fff9ef)!important}
 </section>
 
 <section id="dashboard" class="hidden">
-<div class="dashboard-text-brand text-brand"><div class="company">شركة مصر للطيران للخدمات الجوية</div><div class="workers">العمالة المعاونة</div><div class="rule"></div></div>
+<div class="dashboard-text-brand text-brand"><div class="company">شركة مصر للطيران للخدمات الجوية</div><div class="workers">المتابعة المركزية - العمالة المعاونة</div><div class="rule"></div></div>
 <div class="tabs">
 <button onclick="showTab('home')">📊 الرئيسية</button>
 <button onclick="showTab('workers')">👥 العمالة</button>
@@ -1855,7 +1918,9 @@ db.auth.onAuthStateChange((event,session)=>{
   function injectBars(){
     if(document.getElementById('fbWorkerBar')&&!document.getElementById('fbAdminBar')){}
     const wp=q('#workerPage');
-    if(wp&&!q('#fbWorkerBar')){wp.insertAdjacentHTML('afterbegin',`<div id="fbWorkerBar" class="fb-topbar"><div class="fb-user-mini"><div class="fb-user-avatar" id="fbWorkerAvatar">👤</div><span id="fbWorkerName">العامل</span></div><div class="fb-live-clock" id="fbWorkerClock">00:00:00</div><div class="fb-actions"><button class="fb-icon-btn" aria-label="الرسائل" onclick="toggleFbDrop('fbWorkerMsgDrop')">💬<span id="fbWorkerMsgBadge" class="fb-badge" style="display:none"></span></button><button class="fb-icon-btn" aria-label="الإشعارات" onclick="toggleFbDrop('fbWorkerNotifDrop')">🔔<span id="fbWorkerNotifBadge" class="fb-badge" style="display:none"></span></button></div><div id="fbWorkerMsgDrop" class="fb-dropdown"><div class="fb-drop-head">الرسائل</div><div id="fbWorkerMsgList" class="fb-drop-body"></div><div class="fb-drop-footer"><button onclick="workerChat();closeFbDrops()">فتح المحادثة</button></div></div><div id="fbWorkerNotifDrop" class="fb-dropdown"><div class="fb-drop-head">الإشعارات</div><div id="fbWorkerNotifList" class="fb-drop-body"></div><div class="fb-drop-footer"><button onclick="notificationsWorker();closeFbDrops()">عرض كل الإشعارات</button></div></div></div>`)}
+    if(wp&&!q('#fbWorkerBar')){wp.insertAdjacentHTML('afterbegin',`<div id="fbWorkerBar" class="fb-topbar"><div class="fb-user-mini"><div class="fb-user-avatar" id="fbWorkerAvatar">👤</div><span id="fbWorkerName">مرحبًا، العامل</span></div><div class="fb-actions"><button class="fb-icon-btn" aria-label="الرسائل" onclick="toggleFbDrop('fbWorkerMsgDrop')">💬<span id="fbWorkerMsgBadge" class="fb-badge" style="display:none"></span></button><button class="fb-icon-btn" aria-label="الإشعارات" onclick="toggleFbDrop('fbWorkerNotifDrop')">🔔<span id="fbWorkerNotifBadge" class="fb-badge" style="display:none"></span></button></div><div id="fbWorkerMsgDrop" class="fb-dropdown"><div class="fb-drop-head">الرسائل</div><div id="fbWorkerMsgList" class="fb-drop-body"></div><div class="fb-drop-footer"><button onclick="workerChat();closeFbDrops()">فتح المحادثة</button></div></div><div id="fbWorkerNotifDrop" class="fb-dropdown"><div class="fb-drop-head">الإشعارات</div><div id="fbWorkerNotifList" class="fb-drop-body"></div><div class="fb-drop-footer"><button onclick="notificationsWorker();closeFbDrops()">عرض كل الإشعارات</button></div></div></div>`)}
+    if(wp&&!q('#fbWorkerClock')){const bar=q('#fbWorkerBar');if(bar)bar.insertAdjacentHTML('afterend',`<div id="fbWorkerClockWrap" class="fb-worker-clock-wrap"><div class="fb-live-clock fb-worker-clock" id="fbWorkerClock">🕐 00:00:00</div></div>`);}
+
     const dash=q('#dashboard');
     if(dash&&!q('#fbAdminBar')){dash.insertAdjacentHTML('afterbegin',`<div id="fbAdminBar" class="fb-topbar"><div class="fb-user-mini"><div class="fb-user-avatar">🛡️</div><span>المتابعة المركزية</span></div><div class="fb-live-clock" id="fbAdminClock">00:00:00</div><div class="fb-actions"><button class="fb-icon-btn" aria-label="رسائل العاملين" onclick="toggleFbDrop('fbAdminMsgDrop')">💬<span id="fbAdminMsgBadge" class="fb-badge" style="display:none"></span></button><button class="fb-icon-btn" aria-label="تنبيهات" onclick="toggleFbDrop('fbAdminAlertDrop')">🔔<span id="fbAdminAlertBadge" class="fb-badge" style="display:none"></span></button></div><div id="fbAdminMsgDrop" class="fb-dropdown"><div class="fb-drop-head">رسائل العاملين</div><div id="fbAdminMsgList" class="fb-drop-body"></div><div class="fb-drop-footer"><button onclick="adminChat();closeFbDrops()">فتح الرسائل</button></div></div><div id="fbAdminAlertDrop" class="fb-dropdown"><div class="fb-drop-head">التنبيهات</div><div id="fbAdminAlertList" class="fb-drop-body"></div><div class="fb-drop-footer"><button onclick="adminOverview();closeFbDrops()">فتح لوحة المتابعة</button></div></div></div>`)}
     updateWorkerBarIdentity();loadFbDropData();startFbClock();
@@ -1864,7 +1929,14 @@ db.auth.onAuthStateChange((event,session)=>{
     const tick=()=>{
       const now=new Date();
       const text=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-      document.querySelectorAll('.fb-live-clock').forEach(el=>{el.textContent='🕐 '+text;});
+      const workerClock=document.getElementById('fbWorkerClock');
+      const workerName=(document.getElementById('fbWorkerName')?.textContent||'').trim();
+      if(workerClock){
+        workerClock.textContent='🕐 '+text+(workerName?`  •  ${workerName}`:'');
+        workerClock.title=workerName||'الوقت الحالي';
+      }
+      const adminClock=document.getElementById('fbAdminClock');
+      if(adminClock)adminClock.textContent='🕐 '+text;
     };
     tick();
     if(window.__fbClockTimer)clearInterval(window.__fbClockTimer);
@@ -1873,7 +1945,7 @@ db.auth.onAuthStateChange((event,session)=>{
   window.toggleFbDrop=function(id){document.querySelectorAll('.fb-dropdown').forEach(x=>{if(x.id!==id)x.classList.remove('open')});const x=q('#'+id);if(x)x.classList.toggle('open')};
   window.closeFbDrops=function(){document.querySelectorAll('.fb-dropdown').forEach(x=>x.classList.remove('open'))};
   document.addEventListener('click',e=>{if(!e.target.closest('.fb-topbar'))closeFbDrops()});
-  async function updateWorkerBarIdentity(){const id=await getWorkerIdentity();if(!id)return;const w=(workers||[]).find(x=>x.id===id);if(q('#fbWorkerName'))q('#fbWorkerName').textContent=w?.full_name||'العامل';}
+  async function updateWorkerBarIdentity(){const id=await getWorkerIdentity();if(!id)return;let w=(workers||[]).find(x=>x.id===id);if(!w){const r=await db.from('workers').select('id,full_name,worker_code,department,job_title').eq('id',id).maybeSingle();w=r.data||null;}if(q('#fbWorkerName'))q('#fbWorkerName').textContent=w?.full_name?`مرحبًا، ${w.full_name}`:'مرحبًا، العامل';startFbClock();}
   async function loadFbDropData(){
     const id=await getWorkerIdentity();
     if(id){
@@ -3421,6 +3493,95 @@ body.fb-auth-mode #fbWorkerBar #fbWorkerName{white-space:nowrap;overflow:hidden;
   function watchBars(){addTopDirectory();addComposeActions();}
   const mo=new MutationObserver(()=>watchBars());mo.observe(document.body,{childList:true,subtree:true});
   window.addEventListener('load',()=>{setTimeout(watchBars,700);setTimeout(watchBars,1500)});
+})();
+</script>
+
+
+<style id="worker-requests-v1-style">
+.worker-requests-wrap{direction:rtl}.worker-request-hero{background:linear-gradient(135deg,#111827,#1f2937);color:#fff;border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 12px 30px rgba(15,23,42,.16)}
+.worker-request-hero h3{margin:0 0 6px}.worker-request-hero p{margin:0;opacity:.86}.request-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.request-form-grid textarea{grid-column:1/-1;min-height:130px}.worker-request-card{border:1px solid #e5e7eb;border-radius:18px;padding:14px;background:#fff;margin:10px 0;box-shadow:0 6px 20px rgba(15,23,42,.06)}
+.worker-request-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.worker-request-no{font-weight:900;color:#111827}.worker-request-meta{font-size:12px;color:#6b7280;margin-top:5px}.request-status{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900}.request-status.received{background:#fff7ed;color:#9a3412}.request-status.review{background:#eff6ff;color:#1d4ed8}.request-status.done{background:#ecfdf5;color:#047857}.request-status.rejected{background:#fef2f2;color:#b91c1c}.request-timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}.request-step{padding:8px 5px;text-align:center;border-radius:10px;background:#f3f4f6;color:#9ca3af;font-size:11px;font-weight:800}.request-step.active{background:#111827;color:#fff}.request-step.current{box-shadow:0 0 0 2px #f59e0b inset}.request-admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.request-admin-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}.request-admin-actions select{max-width:220px}.request-empty{text-align:center;padding:24px;color:#6b7280}.request-count-badge{display:inline-block;min-width:24px;padding:3px 7px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;text-align:center}
+@media(max-width:650px){.request-form-grid,.request-admin-grid{grid-template-columns:1fr}.request-timeline{grid-template-columns:1fr 1fr}.worker-request-head{align-items:flex-start;flex-direction:column}}
+</style>
+<script id="worker-requests-v1">
+(function(){
+  const q=s=>document.querySelector(s);
+  const e=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const date=v=>v?new Date(v).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'}):'—';
+  const statusClass=s=>s==='تم التنفيذ'?'done':s==='مرفوض'?'rejected':s==='قيد المراجعة'?'review':'received';
+  const statusIcon=s=>s==='تم التنفيذ'?'✅':s==='مرفوض'?'❌':s==='قيد المراجعة'?'🔎':'📥';
+  const statuses=['تم الاستلام','قيد المراجعة','تم التنفيذ','مرفوض'];
+  const types=['طلب تحديث بيانات','طلب إجازة','طلب مستند أو إفادة','طلب تصحيح حضور','طلب مشكلة تقنية','طلب إداري','شكوى أو ملاحظة','اقتراح','طلب آخر'];
+  function timeline(current){
+    const idx=statuses.indexOf(current); return '<div class="request-timeline">'+statuses.map((s,i)=>`<div class="request-step ${i<=idx?'active':''} ${i===idx?'current':''}">${statusIcon(s)}<br>${s}</div>`).join('')+'</div>';
+  }
+  async function myId(){
+    if(window.currentWorkerId)return window.currentWorkerId;
+    const {data:{user}}=await db.auth.getUser(); if(!user)return null;
+    const r=await db.from('workers').select('id').eq('user_id',user.id).maybeSingle();
+    if(!r.error&&r.data)window.currentWorkerId=r.data.id; return r.data?.id||null;
+  }
+  async function renderWorkerRequests(box){
+    const wid=await myId(); if(!wid){box.innerHTML='<div class="worker-request-card"><p class="error">تعذر تحديد حساب العامل.</p></div>';return;}
+    box.innerHTML=`<div class="worker-requests-wrap">
+      <div class="worker-request-hero"><h3>📝 طلبات العامل الإلكترونية</h3><p>قدّم طلبك، احتفظ برقم المتابعة، وتابع الحالة خطوة بخطوة.</p></div>
+      <div class="worker-request-card"><h3>➕ تقديم طلب جديد</h3>
+        <div class="request-form-grid"><div><label>نوع الطلب</label><select id="wrType">${types.map(x=>`<option>${x}</option>`).join('')}</select></div><div><label>أولوية الطلب</label><select id="wrPriority"><option value="عادية">عادية</option><option value="عاجلة">عاجلة</option></select></div><textarea id="wrDetails" placeholder="اكتب تفاصيل الطلب بوضوح..." maxlength="3000"></textarea></div>
+        <button id="wrSubmit" onclick="window.submitWorkerRequest()">📨 إرسال الطلب والحصول على رقم متابعة</button><p id="wrMsg"></p>
+      </div>
+      <div class="worker-request-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">📋 طلباتي السابقة</h3><button class="small" onclick="window.loadWorkerRequests()">🔄 تحديث</button></div><div id="wrList"><p class="muted">جارٍ تحميل الطلبات...</p></div></div>
+    </div>`;
+    await loadWorkerRequests();
+  }
+  window.submitWorkerRequest=async function(){
+    const wid=await myId(),type=q('#wrType')?.value,priority=q('#wrPriority')?.value||'عادية',details=q('#wrDetails')?.value.trim(),msg=q('#wrMsg'),btn=q('#wrSubmit');
+    if(!wid){msg.className='error';msg.textContent='تعذر تحديد حساب العامل.';return}
+    if(!type||!details){msg.className='error';msg.textContent='اختر نوع الطلب واكتب التفاصيل.';return}
+    btn.disabled=true;msg.className='muted';msg.textContent='جارٍ إرسال الطلب...';
+    const r=await db.from('worker_requests').insert({worker_id:wid,request_type:type,details:'['+priority+'] '+details}).select('request_no,status,created_at').single();
+    btn.disabled=false;
+    if(r.error){msg.className='error';msg.textContent='تعذر إرسال الطلب: '+r.error.message+' — إذا كانت الخدمة جديدة، نفّذ ملف SQL المرفق أولًا.';return}
+    msg.className='success';msg.textContent='✅ تم استلام طلبك. رقم المتابعة: '+r.data.request_no;
+    q('#wrDetails').value='';await loadWorkerRequests();
+  };
+  window.loadWorkerRequests=async function(){
+    const box=q('#wrList');if(!box)return;const wid=await myId();if(!wid)return;
+    const r=await db.from('worker_requests').select('id,request_no,request_type,details,status,admin_notes,created_at,updated_at,completed_at').eq('worker_id',wid).order('created_at',{ascending:false}).limit(100);
+    if(r.error){box.innerHTML=`<p class="error">تعذر تحميل الطلبات: ${e(r.error.message)}</p>`;return;}
+    const rows=r.data||[]; if(!rows.length){box.innerHTML='<div class="request-empty">📭 لا توجد طلبات سابقة. يمكنك تقديم أول طلب من الأعلى.</div>';return;}
+    box.innerHTML=rows.map(x=>`<div class="worker-request-card"><div class="worker-request-head"><div><div class="worker-request-no">${e(x.request_no)} — ${e(x.request_type)}</div><div class="worker-request-meta">تاريخ التقديم: ${date(x.created_at)}</div></div><span class="request-status ${statusClass(x.status)}">${statusIcon(x.status)} ${e(x.status)}</span></div><div style="margin-top:10px"><b>التفاصيل:</b><div class="muted" style="white-space:pre-wrap;margin-top:4px">${e(x.details)}</div></div>${x.admin_notes?`<div style="margin-top:10px;padding:10px;border-radius:10px;background:#f8fafc"><b>رد المتابعة:</b><div class="muted">${e(x.admin_notes)}</div></div>`:''}${timeline(x.status)}<div class="worker-request-meta">آخر تحديث: ${date(x.updated_at)}</div></div>`).join('');
+  };
+  async function adminRequests(){
+    openModal('📝 طلبات العامل الإلكترونية',`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><h3 style="margin:0">📋 إدارة طلبات العامل</h3><p class="muted">استلام الطلبات، مراجعتها، ثم تنفيذها أو رفضها مع تسجيل الرد.</p></div><button onclick="window.adminWorkerRequests()">🔄 تحديث</button></div><div id="awrList" style="margin-top:12px">جارٍ التحميل...</div></div>`);
+    await window.adminWorkerRequests();
+  }
+  window.adminWorkerRequests=async function(){
+    const box=q('#awrList');if(!box)return;
+    const r=await db.from('worker_requests').select('id,request_no,worker_id,request_type,details,status,admin_notes,created_at,updated_at,workers(full_name,worker_code,department)').order('created_at',{ascending:false}).limit(200);
+    if(r.error){box.innerHTML=`<p class="error">تعذر تحميل الطلبات: ${e(r.error.message)}</p>`;return;}
+    const rows=r.data||[];if(!rows.length){box.innerHTML='<div class="request-empty">لا توجد طلبات عامل حتى الآن.</div>';return;}
+    box.innerHTML=rows.map(x=>`<div class="worker-request-card"><div class="worker-request-head"><div><div class="worker-request-no">${e(x.request_no)}</div><div><b>${e(x.workers?.full_name||'عامل')}</b> — ${e(x.workers?.worker_code||'')} — ${e(x.request_type)}</div><div class="worker-request-meta">${e(x.workers?.department||'')} • ${date(x.created_at)}</div></div><span class="request-status ${statusClass(x.status)}">${statusIcon(x.status)} ${e(x.status)}</span></div><div style="margin-top:10px;padding:10px;background:#f8fafc;border-radius:12px;white-space:pre-wrap">${e(x.details)}</div>${timeline(x.status)}<div class="request-admin-actions"><select id="awr-st-${e(x.id)}">${statuses.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select><input id="awr-note-${e(x.id)}" value="${e(x.admin_notes||'')}" placeholder="ملاحظة / رد للعامل" style="flex:1;min-width:180px"><button onclick="window.updateWorkerRequest('${e(x.id)}')">💾 حفظ الحالة والرد</button></div></div>`).join('');
+  };
+  window.updateWorkerRequest=async function(id){
+    const status=q('#awr-st-'+id)?.value,note=q('#awr-note-'+id)?.value.trim();
+    const r=await db.from('worker_requests').update({status,admin_notes:note||null}).eq('id',id);
+    if(r.error){alert('تعذر تحديث الطلب: '+r.error.message);return;}
+    await window.adminWorkerRequests();
+  };
+  window.openWorkerRequests=async function(){const box=q('#workerServiceArea');if(!box)return;await renderWorkerRequests(box);box.scrollIntoView({behavior:'smooth',block:'start'});};
+
+  // Override only the requests service; all other existing services remain untouched.
+  const prev=window.openWorkerService;
+  window.openWorkerService=async function(kind){if(kind==='requests')return window.openWorkerRequests();return prev?prev(kind):null;};
+
+  function injectAdminCard(){
+    const grid=document.querySelector('#centralAdminServices .service-grid');
+    if(!grid||grid.querySelector('.worker-requests-admin-service'))return;
+    const card=document.createElement('div');card.className='service-card worker-requests-admin-service';card.innerHTML='<div class="service-icon">📝</div><h3>طلبات العامل</h3><p>استلام الطلبات الإلكترونية ومراجعتها وتغيير حالتها وإرسال الرد للعامل.</p><button onclick="window.openAdminWorkerRequests()">📝 إدارة الطلبات</button>';
+    grid.appendChild(card);
+  }
+  window.openAdminWorkerRequests=adminRequests;
+  const mo=new MutationObserver(injectAdminCard);mo.observe(document.body,{childList:true,subtree:true});injectAdminCard();
 })();
 </script>
 </body>
