@@ -3597,40 +3597,148 @@ body.fb-auth-mode #fbWorkerBar #fbWorkerName{white-space:nowrap;overflow:hidden;
   function injectAdminCard(){
     const grid=document.querySelector('#centralAdminServices .service-grid');
     if(!grid||grid.querySelector('.worker-requests-admin-service'))return;
-    const card=document.createElement('div');card.className='service-card worker-requests-admin-service';card.innerHTML='<div class="service-icon">📝</div><h3>طلبات العامل</h3><p>استلام الطلبات الإلكترونية ومراجعتها وتغيير حالتها وإرسال الرد للعامل.</p><button type="button" onclick="return window.openAdminWorkerRequests();">📝 إدارة الطلبات</button>';
+    const card=document.createElement('div');card.className='service-card worker-requests-admin-service';card.innerHTML='<div class="service-icon">📝</div><h3>طلبات العامل</h3><p>استلام الطلبات الإلكترونية ومراجعتها وتغيير حالتها وإرسال الرد للعامل.</p><button onclick="window.openAdminWorkerRequests()">📝 إدارة الطلبات</button>';
     grid.appendChild(card);
   }
-  window.openAdminWorkerRequests=async function(){
-    try{
-      if(typeof window.openCentralServiceModal!=='function') throw new Error('نافذة الخدمة غير متاحة');
-      window.openCentralServiceModal('📝 إدارة طلبات العامل','<div class="card"><h3>📋 طلبات العاملين</h3><p class="muted">جارٍ تحميل الطلبات...</p><div id="awrList"></div></div>');
-      const box=document.getElementById('awrList');
-      if(!box) throw new Error('تعذر إنشاء قائمة الطلبات');
-      const r=await db.from('worker_requests').select('id,request_no,worker_id,request_type,details,status,admin_notes,created_at,updated_at').order('created_at',{ascending:false}).limit(200);
-      if(r.error) throw r.error;
-      const rows=r.data||[];
-      if(!rows.length){box.innerHTML='<div class="request-empty">📭 لا توجد طلبات عامل حتى الآن.</div>';return true;}
-      const ids=[...new Set(rows.map(x=>x.worker_id).filter(Boolean))];
-      const wm=new Map();
-      if(ids.length){const wr=await db.from('workers').select('id,full_name,worker_code,department').in('id',ids);if(!wr.error)(wr.data||[]).forEach(w=>wm.set(String(w.id),w));}
-      const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-      const states=['تم الاستلام','قيد المراجعة','تم التنفيذ','مرفوض'];
-      const cls=s=>s==='تم التنفيذ'?'done':s==='مرفوض'?'rejected':s==='قيد المراجعة'?'review':'received';
-      const ico=s=>s==='تم التنفيذ'?'✅':s==='مرفوض'?'❌':s==='قيد المراجعة'?'🔎':'📥';
-      const dt=v=>v?new Date(v).toLocaleString('ar-EG'):'—';
-      box.innerHTML=rows.map(x=>{const w=wm.get(String(x.worker_id))||{},st=x.status||'تم الاستلام';return `<div class="worker-request-card"><div class="worker-request-head"><div><div class="worker-request-no">${esc(x.request_no)}</div><div><b>${esc(w.full_name||'عامل')}</b> — ${esc(w.worker_code||'')} — ${esc(x.request_type)}</div><div class="worker-request-meta">${esc(w.department||'')} • ${dt(x.created_at)}</div></div><span class="request-status ${cls(st)}">${ico(st)} ${esc(st)}</span></div><div style="margin-top:10px;padding:10px;background:#f8fafc;border-radius:12px;white-space:pre-wrap">${esc(x.details)}</div><div class="request-admin-actions"><select id="awr-st-${esc(x.id)}">${states.map(v=>`<option value="${esc(v)}" ${v===st?'selected':''}>${esc(v)}</option>`).join('')}</select><input id="awr-note-${esc(x.id)}" value="${esc(x.admin_notes||'')}" placeholder="ملاحظة / رد للعامل" style="flex:1;min-width:180px"><button type="button" onclick="window.updateWorkerRequest('${esc(x.id)}')">💾 حفظ الحالة والرد</button></div></div>`}).join('');
-      return true;
-    }catch(err){
-      console.error('openAdminWorkerRequests:',err);
-      const box=document.getElementById('awrList');
-      if(box) box.innerHTML='<p class="error">تعذر تحميل الطلبات: '+String(err?.message||err)+'</p>';
-      else alert('تعذر فتح إدارة الطلبات: '+String(err?.message||err));
-      return false;
-    }
-  };
+  window.openAdminWorkerRequests=adminRequests;
   const mo=new MutationObserver(injectAdminCard);mo.observe(document.body,{childList:true,subtree:true});injectAdminCard();
 })();
 </script>
+
+<script>
+(function () {
+  function activePeerBox() {
+    const all = [...document.querySelectorAll('#peerChatMessages')];
+    const visible = all.filter(el => {
+      const r = el.getBoundingClientRect();
+      const s = getComputedStyle(el);
+      return r.width > 0 && r.height > 0 &&
+             s.display !== 'none' && s.visibility !== 'hidden';
+    });
+    return visible[visible.length - 1] || all[all.length - 1] || null;
+  }
+
+  window.refreshPeerChat = async function () {
+    const b = activePeerBox();
+    if (!b) return;
+
+    const adminId = b.dataset.admin || '';
+    const otherId = b.dataset.peer || '';
+
+    if (adminId && typeof refreshAdminPeerChat === 'function') {
+      await refreshAdminPeerChat();
+      return;
+    }
+
+    if (!otherId) {
+      b.innerHTML = '<div class="peer-empty">اختر زميلًا لبدء المحادثة.</div>';
+      return;
+    }
+
+    b.innerHTML = '<div class="peer-empty">⏳ جاري تحميل سجل المحادثة...</div>';
+
+    const r = await db.rpc('get_worker_peer_messages', {
+      p_other_worker_id: otherId
+    });
+
+    if (r.error) {
+      b.innerHTML = '<div class="error">تعذر تحميل سجل المحادثة: ' +
+        (typeof escHtml === 'function' ? escHtml(r.error.message) : r.error.message) +
+        '</div>';
+      return;
+    }
+
+    let me = null;
+    if (typeof myId === 'function') me = await myId();
+    if (!me && typeof getAuthWorkerIdentity === 'function') {
+      me = await getAuthWorkerIdentity();
+    }
+
+    if (!me) {
+      b.innerHTML = '<div class="error">تعذر تحديد حساب العامل الحالي.</div>';
+      return;
+    }
+
+    const rows = r.data || [];
+
+    b.innerHTML = rows.map(x => `
+      <div class="peer-msg ${String(x.sender_worker_id) === String(me) ? 'mine' : 'theirs'}">
+        <div>${typeof mediaHTML === 'function'
+          ? mediaHTML(x.message).html
+          : (typeof escHtml === 'function' ? escHtml(x.message || '') : String(x.message || ''))}</div>
+        <small>${typeof timeAgo === 'function'
+          ? timeAgo(x.created_at)
+          : new Date(x.created_at).toLocaleString('ar-EG')}</small>
+      </div>
+    `).join('') || '<div class="peer-empty">لا توجد رسائل بعد. ابدأ المحادثة 👋</div>';
+
+    if (typeof hydrateMedia === 'function') await hydrateMedia(b);
+
+    const unread = rows
+      .filter(x => String(x.receiver_worker_id) === String(me) && !x.read_at)
+      .map(x => x.id);
+
+    if (unread.length) {
+      await db.from('worker_chat_messages')
+        .update({ read_at: new Date().toISOString() })
+        .in('id', unread);
+    }
+
+    b.scrollTop = b.scrollHeight;
+    if (window.refreshFbBars) refreshFbBars();
+    if (window.loadFbDropData) loadFbDropData();
+  };
+
+  window.selectPeerChat = async function (otherId) {
+    const b = activePeerBox();
+    if (!b || !otherId) return;
+    b.dataset.peer = String(otherId);
+    b.dataset.admin = '';
+    await window.refreshPeerChat();
+  };
+
+  window.sendPeerChat = async function () {
+    const b = activePeerBox();
+    if (!b) return;
+
+    const otherId = b.dataset.peer || '';
+    const input = document.querySelector('#peerChatText');
+    const msg = document.querySelector('#peerChatMsg');
+    const text = input?.value?.trim() || '';
+
+    if (!otherId) {
+      if (msg) msg.textContent = 'اختر العامل أولًا.';
+      return;
+    }
+    if (!text) {
+      if (msg) msg.textContent = 'اكتب الرسالة أولًا.';
+      return;
+    }
+
+    const r = await db.rpc('send_worker_peer_message', {
+      p_receiver_worker_id: otherId,
+      p_message: text
+    });
+
+    if (r.error) {
+      if (msg) {
+        msg.className = 'error';
+        msg.textContent = 'تعذر إرسال الرسالة: ' + r.error.message;
+      }
+      return;
+    }
+
+    if (input) input.value = '';
+    if (msg) {
+      msg.className = 'success';
+      msg.textContent = '';
+    }
+
+    await window.refreshPeerChat();
+  };
+})();
+</script>
+
 </body>
 </html>
 <style>
