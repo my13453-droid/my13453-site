@@ -704,8 +704,9 @@ async function login(){
  const payload=isEmail?{email:identifier,password}:{phone:identifier.replace(/[^0-9+]/g,""),password};
  const {data,error}=await db.auth.signInWithPassword(payload);
  if(error){msg.className="error";msg.textContent="فشل الدخول: "+error.message+(isEmail?"":" — تأكد أن رقم الهاتف مرتبط بحساب Supabase ومفعل للدخول.");return;}
- msg.className="success";msg.textContent="تم تسجيل الدخول بنجاح.";
- await restoreAppSession(data.session);
+ msg.className="muted";msg.textContent="جارٍ التحقق من صلاحية الحساب...";
+ const ok=await restoreAppSession(data.session);
+ if(!ok) return;
 }
 async function loadAdmin(){
  const msg=document.getElementById("adminLoadMsg");
@@ -1178,22 +1179,29 @@ async function restoreAppSession(session){
     const {data:role,error:roleError}=await db.from("user_roles").select("role").eq("user_id",session.user.id).maybeSingle();
     if(roleError){
       console.error("تعذر قراءة صلاحية المستخدم:",roleError);
+      await db.auth.signOut();
       document.getElementById("login").classList.remove("hidden");
       document.getElementById("loginMsg").className="error";
       document.getElementById("loginMsg").textContent="تعذر تحميل صلاحيات الحساب: "+roleError.message;
       return false;
     }
 
-    if(role?.role==="admin"){
-      document.getElementById("workerPage").classList.add("hidden");
-      document.getElementById("dashboard").classList.remove("hidden");
-      await loadAdmin();
-    }else{
+    // الدخول مسموح للأدمن فقط. حساب العامل لا يستطيع الدخول إلى الموقع.
+    if(role?.role!=="admin"){
+      await db.auth.signOut();
+      document.getElementById("login").classList.remove("hidden");
       document.getElementById("dashboard").classList.add("hidden");
-      document.getElementById("workerPage").classList.remove("hidden");
-      await updateWorkerLastSeen(session.user.id);
-      await loadWorker();
+      document.getElementById("workerPage").classList.add("hidden");
+      document.getElementById("forgot").classList.add("hidden");
+      document.getElementById("newPassword").classList.add("hidden");
+      document.getElementById("loginMsg").className="error";
+      document.getElementById("loginMsg").textContent="هذا الحساب غير مصرح له بتسجيل الدخول إلى الموقع.";
+      return false;
     }
+
+    document.getElementById("workerPage").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    await loadAdmin();
     // زر التواصل يظهر فقط بعد الدخول الناجح، ولا يظهر في شاشة تسجيل الدخول.
     setContactWhatsapp(true);
     appBooted=true;
