@@ -1194,8 +1194,8 @@ async function restoreAppSession(session){
       document.getElementById("workerPage").classList.add("hidden");
       document.getElementById("forgot").classList.add("hidden");
       document.getElementById("newPassword").classList.add("hidden");
-      document.getElementById("loginMsg").className="error";
-      document.getElementById("loginMsg").textContent="هذا الحساب غير مصرح له بتسجيل الدخول إلى الموقع.";
+      document.getElementById("loginMsg").textContent="";
+      document.getElementById("loginMsg").className="";
       return false;
     }
 
