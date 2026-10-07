@@ -460,8 +460,37 @@ th,.month-table th,.salary-days th{background:linear-gradient(135deg,#111827,#31
 تذكرني على هذا الجهاز
 </label>
 <button onclick="login()">دخول</button>
-<p style="text-align:center"><a href="#" onclick="showForgot();return false">نسيت كلمة المرور؟</a></p>
+<p style="text-align:center">
+  <a href="#" onclick="showForgot();return false">نسيت كلمة المرور؟</a>
+  &nbsp; | &nbsp;
+  <a href="#" onclick="showSignup();return false">🆕 تسجيل حساب عامل جديد</a>
+</p>
 <p id="loginMsg" class="error"></p>
+</section>
+
+<section id="signup" class="card hidden">
+<h2>🆕 تسجيل حساب عامل جديد</h2>
+<p class="muted">العامل يسجل بياناته بنفسه، وبعد إنشاء الحساب يتم ربط الحساب بملفه في قاعدة البيانات تلقائيًا.</p>
+<div class="formgrid">
+  <input id="signupName" placeholder="👤 الاسم رباعي" autocomplete="name">
+  <input id="signupPhone" placeholder="📱 رقم الهاتف" autocomplete="tel">
+  <input id="signupEmail" type="email" placeholder="📧 البريد الإلكتروني" autocomplete="email">
+  <select id="signupDepartment">
+    <option value="">🏢 اختر الإدارة العامة</option>
+  </select>
+  <input id="signupJob" placeholder="📌 القسم / الوظيفة">
+  <select id="signupGender">
+    <option value="">👤 النوع</option>
+    <option value="ذكر">ذكر</option>
+    <option value="أنثى">أنثى</option>
+  </select>
+  <input id="signupPassword" type="password" placeholder="🔐 كلمة المرور (8 أحرف على الأقل)" autocomplete="new-password">
+  <input id="signupPassword2" type="password" placeholder="🔐 تأكيد كلمة المرور" autocomplete="new-password">
+</div>
+<p class="muted">سيتم إنشاء كود العامل تلقائيًا عند ربط الحساب بقاعدة البيانات.</p>
+<button onclick="registerWorker()">✅ إنشاء الحساب وربطه</button>
+<button class="secondary" onclick="showLogin()">↩️ العودة لتسجيل الدخول</button>
+<p id="signupMsg"></p>
 </section>
 
 
@@ -510,7 +539,9 @@ th,.month-table th,.salary-days th{background:linear-gradient(135deg,#111827,#31
 <div class="formgrid">
 <input id="code" placeholder="كود الاسم">
 <input id="name" placeholder="الاسم رباعي">
-<input id="department" placeholder="الإدارة">
+<select id="department">
+<option value="">الإدارة العامة</option>
+</select>
 <input id="job" placeholder="القسم">
 <input id="jobPosition" type="hidden" value="">
 <input id="phone" placeholder="📱 رقم الهاتف">
@@ -693,6 +724,150 @@ let restoringSession=false;
 
 function showTab(id){document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");if(id==="attendance"){initMonthSelectors();loadMonthlyAttendance();loadMonthlySummary();}if(id==="notificationsAdmin"){loadAdminNotifications();}}
 
+const GENERAL_DEPARTMENTS = [
+  "الإدارة العامة للتموين",
+  "الإدارة العامة للمخازن",
+  "الإدارة العامة للبحوث والتطوير",
+  "إدارة التسويق والتعاقدات",
+  "أخرى"
+];
+
+function populateDepartmentSelects(extraDepartments=[]){
+  const merged=[...new Set([...GENERAL_DEPARTMENTS,...extraDepartments.map(x=>String(x||"").trim()).filter(Boolean)])];
+  const signup=document.getElementById("signupDepartment");
+  const admin=document.getElementById("department");
+  const currentSignup=signup?.value||"", currentAdmin=admin?.value||"";
+  const html='<option value="">اختر الإدارة العامة</option>'+merged.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+  if(signup){signup.innerHTML=html; if(merged.includes(currentSignup)) signup.value=currentSignup;}
+  if(admin){admin.innerHTML=html; if(merged.includes(currentAdmin)) admin.value=currentAdmin;}
+}
+
+function showSignup(){
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("forgot").classList.add("hidden");
+  document.getElementById("newPassword").classList.add("hidden");
+  document.getElementById("signup").classList.remove("hidden");
+  populateDepartmentSelects();
+  document.getElementById("signupMsg").textContent="";
+}
+
+function showLogin(){
+  document.getElementById("signup").classList.add("hidden");
+  document.getElementById("forgot").classList.add("hidden");
+  document.getElementById("newPassword").classList.add("hidden");
+  document.getElementById("signup").classList.add("hidden");
+  document.getElementById("login").classList.remove("hidden");
+}
+
+function clearSignupForm(){
+  ["signupName","signupPhone","signupEmail","signupJob","signupPassword","signupPassword2"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  const d=document.getElementById("signupDepartment");if(d)d.value="";
+  const g=document.getElementById("signupGender");if(g)g.value="";
+}
+
+async function getNextWorkerCode(){
+  // الأفضل استخدام RPC آمن إذا كان موجودًا، ثم نستخدم قراءة workers كاحتياطي.
+  try{
+    const rpc=await db.rpc("get_next_worker_code");
+    if(!rpc.error && rpc.data!==null && rpc.data!==undefined){
+      const value=typeof rpc.data==="object" ? (rpc.data.worker_code||rpc.data.code||rpc.data.result) : rpc.data;
+      if(value!==null && value!==undefined && String(value).trim()) return String(value).trim();
+    }
+  }catch(e){}
+  try{
+    const r=await db.from("workers").select("worker_code").order("worker_code",{ascending:false}).limit(5000);
+    if(!r.error){
+      const nums=(r.data||[]).map(x=>parseInt(String(x.worker_code||"").replace(/\D/g,""),10)).filter(Number.isFinite);
+      const next=(nums.length?Math.max(...nums):0)+1;
+      return String(next).padStart(3,"0");
+    }
+  }catch(e){}
+  // آخر احتياط إذا كانت سياسات القراءة تمنع الوصول للجدول.
+  return "W"+Date.now().toString().slice(-8);
+}
+
+async function ensureWorkerProfileFromMetadata(user){
+  if(!user?.id)return null;
+  const existing=await db.from("workers").select("id,worker_code,full_name,department,job_title,position,phone,email,daily_rate,status,user_id").eq("user_id",user.id).maybeSingle();
+  if(existing.data)return existing.data;
+  const md=user.user_metadata||{};
+  const name=String(md.full_name||"").trim();
+  const department=String(md.department||"").trim();
+  if(!name||!department)return null;
+  const code=String(md.worker_code||await getNextWorkerCode()||"").trim();
+  if(!code)return null;
+  const row={
+    worker_code:code,
+    full_name:name,
+    department,
+    job_title:String(md.job_title||"").trim(),
+    position:String(md.position||"").trim(),
+    phone:String(md.phone||user.phone||"").trim(),
+    email:String(user.email||md.email||"").trim(),
+    gender:String(md.gender||"").trim(),
+    daily_rate:233.33333333333,
+    status:"نشط",
+    user_id:user.id
+  };
+  const ins=await db.from("workers").insert(row).select("id,worker_code,full_name,department,job_title,position,phone,email,daily_rate,status,user_id").single();
+  if(ins.error){
+    // إذا أنشئ السجل بالتزامن من جلسة أخرى، نحاول قراءته مرة ثانية.
+    const again=await db.from("workers").select("id,worker_code,full_name,department,job_title,position,phone,email,daily_rate,status,user_id").eq("user_id",user.id).maybeSingle();
+    return again.data||null;
+  }
+  return ins.data||null;
+}
+
+async function registerWorker(){
+  const msg=document.getElementById("signupMsg");
+  const name=document.getElementById("signupName").value.trim();
+  const phone=document.getElementById("signupPhone").value.trim();
+  const email=document.getElementById("signupEmail").value.trim().toLowerCase();
+  const department=document.getElementById("signupDepartment").value.trim();
+  const job=document.getElementById("signupJob").value.trim();
+  const gender=document.getElementById("signupGender").value.trim();
+  const password=document.getElementById("signupPassword").value;
+  const password2=document.getElementById("signupPassword2").value;
+  msg.className="";
+
+  if(!name||name.split(/\s+/).length<3){msg.className="error";msg.textContent="اكتب الاسم كاملًا.";return}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg.className="error";msg.textContent="اكتب بريدًا إلكترونيًا صحيحًا.";return}
+  if(!department){msg.className="error";msg.textContent="اختر الإدارة العامة.";return}
+  if(!password||password.length<8){msg.className="error";msg.textContent="كلمة المرور يجب ألا تقل عن 8 أحرف.";return}
+  if(password!==password2){msg.className="error";msg.textContent="كلمتا المرور غير متطابقتين.";return}
+
+  msg.className="muted";msg.textContent="جارٍ إنشاء الحساب وربطه ببيانات العامل...";
+  const {data,error}=await db.auth.signUp({
+    email,
+    password,
+    options:{
+      data:{
+        full_name:name,phone,department,job_title:job,gender,
+        worker_code:"",status:"نشط",daily_rate:233.33333333333
+      }
+    }
+  });
+  if(error){msg.className="error";msg.textContent="تعذر إنشاء الحساب: "+error.message;return}
+
+  // إذا كان تأكيد البريد غير مفعل، تكون هناك جلسة ونربط العامل فورًا.
+  if(data?.user){
+    const linked=await ensureWorkerProfileFromMetadata(data.user);
+    if(linked){
+      msg.className="success";
+      msg.textContent=`تم إنشاء الحساب وربطه بنجاح. كود العامل: ${linked.worker_code}.`;
+      clearSignupForm();
+      setTimeout(async()=>{
+        if(data.session){await restoreAppSession(data.session);}
+        else showLogin();
+      },900);
+      return;
+    }
+  }
+
+  msg.className="success";
+  msg.textContent="تم إنشاء الحساب. إذا ظهر طلب تأكيد البريد، أكد بريدك أولًا ثم سجل الدخول؛ وسيتم إنشاء وربط ملف العامل تلقائيًا عند أول دخول.";
+}
+
 async function login(){
  const identifier=document.getElementById("email").value.trim();
  const password=document.getElementById("password").value;
@@ -717,6 +892,7 @@ async function loadAdmin(){
    return;
  }
  workers=data||[];
+ populateDepartmentSelects(workers.map(w=>w.department));
  renderWorkers();fillWorkerSelect();fillAdminDocWorker();fillNotifyWorker();initMonthSelectors();
  await loadMonthlyAttendance(); await loadMonthlySummary(); await loadStats();
  if(msg){msg.className="success";msg.textContent=`تم تحميل بيانات ${workers.length} عامل.`;}
@@ -1074,6 +1250,7 @@ async function deleteAllMyNotifications(){if(!confirm('حذف جميع تنبي�
 
 function showForgot(){
  document.getElementById("login").classList.add("hidden");
+ document.getElementById("signup").classList.add("hidden");
  document.getElementById("forgot").classList.remove("hidden");
  document.getElementById("newPassword").classList.add("hidden");
     setContactWhatsapp(true);
@@ -1083,6 +1260,7 @@ function showForgot(){
 function showLogin(){
  document.getElementById("forgot").classList.add("hidden");
  document.getElementById("newPassword").classList.add("hidden");
+ document.getElementById("signup").classList.add("hidden");
  document.getElementById("login").classList.remove("hidden");
 }
 function showPasswordRecovery(){
@@ -1175,39 +1353,45 @@ async function restoreAppSession(session){
     document.getElementById("login").classList.add("hidden");
     document.getElementById("forgot").classList.add("hidden");
     document.getElementById("newPassword").classList.add("hidden");
+    document.getElementById("signup").classList.add("hidden");
 
     const {data:role,error:roleError}=await db.from("user_roles").select("role").eq("user_id",session.user.id).maybeSingle();
     if(roleError){
-      console.error("تعذر قراءة صلاحية المستخدم:",roleError);
-      await db.auth.signOut();
-      document.getElementById("login").classList.remove("hidden");
-      document.getElementById("loginMsg").className="error";
-      document.getElementById("loginMsg").textContent="تعذر تحميل صلاحيات الحساب: "+roleError.message;
-      return false;
+      console.warn("تعذر قراءة صلاحية المستخدم، سيتم فحص ملف العامل:",roleError.message);
     }
 
-    // الدخول مسموح للأدمن فقط. حساب العامل لا يستطيع الدخول إلى الموقع.
-    if(role?.role!=="admin"){
-      await db.auth.signOut();
-      document.getElementById("login").classList.remove("hidden");
-      document.getElementById("dashboard").classList.add("hidden");
+    if(role?.role==="admin"){
       document.getElementById("workerPage").classList.add("hidden");
-      document.getElementById("forgot").classList.add("hidden");
-      document.getElementById("newPassword").classList.add("hidden");
-      document.getElementById("loginMsg").textContent="";
-      document.getElementById("loginMsg").className="";
-      return false;
+      document.getElementById("dashboard").classList.remove("hidden");
+      await loadAdmin();
+      setContactWhatsapp(true);
+      appBooted=true;
+      return true;
     }
 
+    // العامل: إذا لم يوجد ملف workers بعد، ننشئه تلقائيًا من بيانات التسجيل.
+    const worker=await ensureWorkerProfileFromMetadata(session.user);
+    if(worker){
+      document.getElementById("dashboard").classList.add("hidden");
+      document.getElementById("workerPage").classList.remove("hidden");
+      await loadWorker();
+      if(typeof ensureWorkerServices==="function") ensureWorkerServices();
+      if(typeof injectBars==="function") injectBars();
+      setContactWhatsapp(true);
+      appBooted=true;
+      return true;
+    }
+
+    await db.auth.signOut();
+    document.getElementById("login").classList.remove("hidden");
+    document.getElementById("dashboard").classList.add("hidden");
     document.getElementById("workerPage").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
-    await loadAdmin();
-    // زر التواصل يظهر فقط بعد الدخول الناجح، ولا يظهر في شاشة تسجيل الدخول.
-    setContactWhatsapp(true);
-    appBooted=true;
-    return true;
+    document.getElementById("loginMsg").className="error";
+    document.getElementById("loginMsg").textContent="الحساب تم إنشاؤه لكن تعذر ربطه ببيانات العامل. راجع صلاحيات جدول workers في Supabase.";
+    return false;
   }catch(e){
     console.error("خطأ أثناء استعادة الجلسة:",e);
+    document.getElementById("login").classList.remove("hidden");
     document.getElementById("loginMsg").className="error";
     document.getElementById("loginMsg").textContent="حدث خطأ أثناء استعادة الجلسة: "+(e?.message||"خطأ غير معروف");
     return false;
@@ -1215,7 +1399,6 @@ async function restoreAppSession(session){
     restoringSession=false;
   }
 }
-
 async function logout(){
   setContactWhatsapp(false);
   await db.auth.signOut();
@@ -1268,6 +1451,7 @@ db.auth.onAuthStateChange((event,session)=>{
       setContactWhatsapp(false);
       document.getElementById("dashboard").classList.add("hidden");
       document.getElementById("workerPage").classList.add("hidden");
+      document.getElementById("signup").classList.add("hidden");
       setContactWhatsapp(false);
     }
   }catch(e){
