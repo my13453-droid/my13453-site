@@ -864,8 +864,10 @@ async function registerWorker(){
     }
   }
 
-  msg.className="success";
-  msg.textContent="تم إنشاء الحساب. إذا ظهر طلب تأكيد البريد، أكد بريدك أولًا ثم سجل الدخول؛ وسيتم إنشاء وربط ملف العامل تلقائيًا عند أول دخول.";
+  // في الوضع الصحيح (Confirm email = OFF) يجب أن يعيد Supabase جلسة مباشرة.
+  // إذا لم تُعد جلسة، فهذا يعني أن إعداد تأكيد البريد ما زال مفعّلًا في Supabase.
+  msg.className="error";
+  msg.textContent="تم إنشاء الحساب لكن لم يتم الدخول تلقائيًا. يجب إيقاف تأكيد البريد الإلكتروني من إعدادات Supabase ثم إعادة التسجيل.";
 }
 
 async function login(){
@@ -1375,6 +1377,10 @@ async function restoreAppSession(session){
       document.getElementById("dashboard").classList.add("hidden");
       document.getElementById("workerPage").classList.remove("hidden");
       await loadWorker();
+      await updateWorkerLastSeen(session.user.id);
+      const seenNow=new Date().toISOString();
+      const localWorker=workers?.find?.(w=>w.user_id===session.user.id);
+      if(localWorker) localWorker.last_seen_at=seenNow;
       if(typeof ensureWorkerServices==="function") ensureWorkerServices();
       if(typeof injectBars==="function") injectBars();
       setContactWhatsapp(true);
